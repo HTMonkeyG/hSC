@@ -32,18 +32,21 @@ LFLAGS += -L./libraries/MinHook -lMinHook
 LFLAGS += -L./libraries/imgui-1.91.9b -limgui -limgui_impl_win32 -limgui_impl_dx12
 LFLAGS += -L./libraries/UGLHook -luglhook
 
-.PHONY: all clean libs clean_libs clean_all
+.PHONY: all clean libs clean_libs clean_all prepare
+
+prepare:
+	@mkdir -p $(DIST_DIR)
 
 $(BIN_TARGET): $(C_OBJ) $(CPP_OBJ)
 	@echo Linking ...
 	@$(CXX) $(CFLAGS) $^ -shared -o $@ $(LFLAGS)
 	@echo Done.
 
-$(DIST_DIR)/%.o: $(SRC_DIR)/%.c
+$(DIST_DIR)/%.o: $(SRC_DIR)/%.c | prepare
 	@echo Compiling $< ...
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(DIST_DIR)/%.o: $(SRC_DIR)/%.cpp
+$(DIST_DIR)/%.o: $(SRC_DIR)/%.cpp | prepare
 	@echo Compiling $< ...
 	@$(CXX) $(CFLAGS) -c $< -o $@
 
