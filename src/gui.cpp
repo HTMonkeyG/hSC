@@ -1,7 +1,8 @@
 #include <math.h>
 #include "imgui.h"
 #include "imgui_impl_win32.h"
-#include "imgui_impl_dx12.h" 
+#include "imgui_impl_dx12.h"
+#include "kiero.h"
 #include "uglhook.h"
 
 #include "gui.h"
@@ -80,7 +81,8 @@ i08 gui_init() {
   memset(&gGui, 0, sizeof(GUI_t));
   QueryPerformanceFrequency((LARGE_INTEGER *)&gGui.performFreq);
   gGui.hInit = CreateEventW(NULL, 0, 0, NULL);
-  D3D12Hooks::init(
+
+  return D3D12Hooks::init(
     [](const DXGI_SWAP_CHAIN_DESC *sDesc, void *lpUser) -> void {
       SetEvent(gGui.hInit);
       
@@ -334,3 +336,5 @@ i08 gui_update() {
 
   return 1;
 }
+
+
