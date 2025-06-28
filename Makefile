@@ -18,7 +18,7 @@ CXX = g++
 CFLAGS = -Wall -Wformat -Os -ffunction-sections -fdata-sections -static -flto -s -mavx -msse
 CFLAGS += -Wl,--gc-sections,--version-script=$(VERSION_SCRIPT)
 # Include ImGui.
-CFLAGS += -I./libraries/imgui-1.92 -I./libraries/imgui-1.92/backends
+CFLAGS += -I./libraries/imgui-1.92.0 -I./libraries/imgui-1.92.0/backends
 # Include MinHook.
 CFLAGS += -I./libraries/MinHook/include
 # Include kiero.
@@ -29,7 +29,7 @@ CFLAGS += -I./libraries/UGLHook/src
 LFLAGS = -lgdi32 -ld3d12 -ldwmapi -ld3dcompiler -lstdc++
 LFLAGS += -L./libraries/kiero -lkiero
 LFLAGS += -L./libraries/MinHook -lMinHook
-LFLAGS += -L./libraries/imgui-1.92 -limgui -limgui_impl_win32 -limgui_impl_dx12
+LFLAGS += -L./libraries/imgui-1.92.0 -limgui -limgui_impl_win32 -limgui_impl_dx12
 LFLAGS += -L./libraries/UGLHook -luglhook
 
 .PHONY: all clean libs clean_libs clean_all prepare
@@ -61,13 +61,13 @@ all: libs
 
 libs:
 	@echo Compiling libraries ...
-	-@make -s -C ./libraries/imgui-1.92 all
+	-@make -s -C ./libraries/imgui-1.92.0 all
 	-@make -s -C ./libraries/MinHook libMinHook.a
 	-@make -s -C ./libraries/UGLHook
 	-@make -s -C ./libraries/kiero
 
 clean_libs:
-	-@make -s -C ./libraries/imgui-1.92 clean
+	-@make -s -C ./libraries/imgui-1.92.0 clean
 	-@make -s -C ./libraries/kiero clean
 	-@make -s -C ./libraries/UGLHook clean
 	-@make -s -C ./libraries/MinHook clean
