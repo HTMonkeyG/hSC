@@ -35,7 +35,7 @@ LFLAGS += -L./libraries/UGLHook -luglhook
 .PHONY: all clean libs clean_libs clean_all prepare
 
 prepare:
-	@mkdir -p $(DIST_DIR)
+	@-mkdir "$(DIST_DIR)"
 
 $(BIN_TARGET): $(C_OBJ) $(CPP_OBJ)
 	@echo Linking ...

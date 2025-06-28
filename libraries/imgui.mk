@@ -20,7 +20,7 @@ CFLAGS = -std=c++11 -g -Wall -Wformat -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends -DN
 all: prepare $(DIST_DIR)/libimgui.a $(DIST_DIR)/libimgui_impl_win32.a $(DIST_DIR)/libimgui_impl_dx12.a
 
 prepare:
-	@mkdir -p $(DIST_DIR)/imgui/backends
+	@-mkdir "$(DIST_DIR)/imgui/backends"
 
 # Rule to compile imgui sources
 $(DIST_DIR)/imgui/%.o: $(IMGUI_DIR)/%.cpp | prepare
