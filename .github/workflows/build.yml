@@ -11,21 +11,16 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout
+    - uses: actions/checkout@latest
       with:
         submodules: recursive
-
-    - name: Set up MinGW
-      uses: egor-tensin/setup-mingw
-      with:
-        version: latest
 
     - name: Build
       shell: msys2 {0}
       run: make all
 
     - name: Upload artifact
-      uses: actions/upload-artifact
+      uses: actions/upload-artifact@latest
       with:
         name: hsc-plugin
         path: dist/
