@@ -16,7 +16,6 @@ jobs:
         submodules: recursive
 
     - name: Build
-      shell: msys2 {0}
       run: make all
 
     - name: Upload artifact
