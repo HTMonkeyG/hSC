@@ -41,21 +41,17 @@ void gui_inputFPV() {
   if (ImGui::IsKeyDown(ImGuiKey_W))
     r.z += 1.0f;
   if (ImGui::IsKeyDown(ImGuiKey_A))
-    gState.freecamMode != FC_FULLDIR
-      ? r.x += 1.0f
-      : s.z += 1.0f;
-  if (ImGui::IsKeyDown(ImGuiKey_S))
-    r.z -= 1.0f;
+    s.z += 1.0f;
+  //if (ImGui::IsKeyDown(ImGuiKey_S))
+  //  r.z -= 1.0f;
   if (ImGui::IsKeyDown(ImGuiKey_D))
-    gState.freecamMode != FC_FULLDIR
-      ? r.x -= 1.0f
-      : s.z -= 1.0f;
+    s.z -= 1.0f;
 
   // Up and down.
   if (ImGui::IsKeyDown(ImGuiKey_Space))
     r.y += 1.0f;
-  if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
-    r.y -= 1.0f;
+  //if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+  //  r.y -= 1.0f;
 
   gState.movementInput = r;
   gState.facingInput = s;

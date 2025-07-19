@@ -6,8 +6,9 @@
 #include "fpv/elytra.h"
 #include "ui/gui.h"
 #include "ui/input.h"
-#include "camera.h"
 #include "mth/aabb.h"
+#include "camera.h"
+#include "hooked.h"
 
 // ----------------------------------------------------------------------------
 // [SECTION] Declarations and definitions.
@@ -26,9 +27,6 @@ typedef u64 (__fastcall *FnWorld_interactionTest)(
 extern SetupFunctions_t gTramp;
 // gFpv defined in fpv.c
 extern FPV_t gFpv;
-
-// Globale variables.
-u64 gSavedLevelContext = 0;
 
 // ----------------------------------------------------------------------------
 // [SECTION] Static helper functions.
@@ -89,9 +87,8 @@ static i08 freecamCheckCollision(
 ) {
   u08 result = 0
     , done = 0;
-  v4f vec = *delta
-    , vertices[8]
-    , origin, dir, center;
+  v4f vertices[8]
+    , origin, dir, center, vec;
   f32 len;
   i32 iter;
   InteractionResult ir;
@@ -104,6 +101,7 @@ static i08 freecamCheckCollision(
   )
     return 0;
 
+  vec = *delta;
   center = aabb_getCenter(aabb);
   aabb_getAllVertices(aabb, vertices);
   dir = v4fnormalize(vec);

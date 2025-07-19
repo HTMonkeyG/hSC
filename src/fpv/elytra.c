@@ -7,6 +7,8 @@
 #include "fpv/fpv.h"
 #include "mth/macros.h"
 
+static const v4f size = {0.1f, 0.1f, 0.1f, 0.1f};
+
 FPV_t gElytra = {0};
 
 static v4f calculateViewVector(v4f rot) {
@@ -38,9 +40,14 @@ static inline void elytraFirework(v4f mDelta, f32 timeElapsed) {
       0.5f
     )
   );
+  // Convert m/gt^2 to m/s^2.
+  tmp1 = v4fscale(tmp1, 400.0f);
 
-  // Convert m/gt^2 to m/s^2 and apply accelerate.
-  gElytra.vel = v4fadd(gElytra.vel, v4fscale(tmp1, mDelta.z * timeElapsed * 400.0f));
+  // Apply accelerate.
+  gElytra.vel = v4fadd(gElytra.vel, v4fscale(tmp1, mDelta.z * timeElapsed));
+  // When pressing space in MCBE, the elytra will be given an upward
+  // acceleration.
+  gElytra.vel.y += 48.0f * mDelta.y * timeElapsed;
 }
 
 /**
@@ -53,14 +60,15 @@ static inline void elytraTravel(f32 timeElapsed) {
   v4f view = calculateViewVector(gElytra.rot)
     // Convert to m/gt.
     , vel = v4fscale(gElytra.vel, 1 / 20.0f)
-    , tmpVec;
+    , tmpVec, deltaVel;
   f32 timeGt = timeElapsed * 20.0f
     , viewXZLen = sqrtf(view.x * view.x + view.z * view.z)
     , horizonSpeed = sqrtf(vel.x * vel.x + vel.z * vel.z)
     , cosPitch2 = cosf(gElytra.rot.y)
     // Gravitational acceleration.
     , gravity = -0.08f * timeGt
-    , tmp;
+    , friction, tmp;
+  AABB_t aabb;
 
   cosPitch2 *= cosPitch2;
   vel.y += gravity * (1.0f - 0.75f * cosPitch2);
@@ -99,6 +107,23 @@ static inline void elytraTravel(f32 timeElapsed) {
   // Apply air resistance.
   tmpVec = v4fmul(vel, v4fscale(v4fnew(0.01f, 0.02f, 0.01f, 0), timeGt));
   gElytra.vel = v4fscale(v4fsub(vel, tmpVec), 20.0f);
+
+  // Check collision.
+  aabb_fromCenter(&aabb, gElytra.pos, size);
+  deltaVel = gElytra.vel;
+  if (fpv_checkCollision(&aabb, &gElytra.vel, timeElapsed)) {
+    deltaVel = v4fnormalize(v4fsub(gElytra.vel, deltaVel));
+    // Calculate the pressure using the momentum theorem.
+    friction = v4flen(deltaVel) / timeElapsed * 0.01f * timeElapsed;
+    // Simulate static friction.
+    if (v4flen(gElytra.vel) > friction)
+      gElytra.vel = v4fsub(
+        gElytra.vel,
+        v4fscale(v4fnormalize(gElytra.vel), friction));
+    else
+      gElytra.vel = V4FZERO;
+    if (deltaVel.y);
+  }
 
   // Do movement.
   gElytra.pos = v4fadd(gElytra.pos, v4fscale(gElytra.vel, timeElapsed));

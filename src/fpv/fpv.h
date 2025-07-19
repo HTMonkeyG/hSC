@@ -1,6 +1,7 @@
 #ifndef __FPV_H__
 #define __FPV_H__
 
+#include "mth/aabb.h"
 #include "mth/vector.h"
 #include "aliases.h"
 
@@ -29,7 +30,7 @@ typedef struct {
   v4f aacc;
 } FPV_t;
 
-i08 fpv_checkCollision();
+i08 fpv_checkCollision(AABB_t *aabb, v4f *velocity, f32 timeElapsed);
 
 #ifdef __cplusplus
 }
