@@ -1,11 +1,11 @@
 #include "imgui.h"
 
-#include "ui/gui.h"
-#include "ui/input.h"
+#include "mth/macros.h"
+#include "ui/ui.h"
 
 v4f gMouseDeltaPx = {0};
 
-void gui_inputFreecam() {
+static void gui_inputFreecam() {
   v4f r = v4fnew(0.0f, 0.0f, 0.0f, 0.0f)
     , s = v4fnew(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -33,7 +33,7 @@ void gui_inputFreecam() {
   gState.facingInput = s;
 }
 
-void gui_inputFPV() {
+static void gui_inputFPV() {
   v4f r = v4fnew(0.0f, 0.0f, 0.0f, 0.0f)
     , s = v4fnew(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -55,6 +55,13 @@ void gui_inputFPV() {
 
   gState.movementInput = r;
   gState.facingInput = s;
+}
+
+void gui_handleInput() {
+  if (gState.majorMode == OM_FREE)
+    gui_inputFreecam();
+  if (gState.majorMode == OM_FPV)
+    gui_inputFPV();
 }
 
 v4f gui_getFacingDeltaRad() {

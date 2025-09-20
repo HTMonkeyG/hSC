@@ -198,6 +198,32 @@ static inline v4f v4fnormalize(v4f a) {
 }
 
 /**
+ * Return the absolute value of each component of a.
+ * 
+ * @param a
+ * @returns
+ */
+static inline v4f v4fabs(v4f a) {
+  __m128 v1, vMask;
+  v4f r;
+  static const u32 mask[4] = {
+    0x7FFFFFFF,
+    0x7FFFFFFF,
+    0x7FFFFFFF,
+    0x7FFFFFFF
+  };
+
+  v1 = _mm_loadu_ps((float *)&a);
+  vMask = _mm_loadu_ps((float *)mask);
+
+  v1 = _mm_and_ps(v1, vMask);
+
+  _mm_storeu_ps((float *)&r, v1);
+
+  return r;
+}
+
+/**
  * Calculate reflection vector.
  * 
  * @param n Normalize vector.
@@ -249,6 +275,60 @@ static inline v4f v4fprojection(v4f a, v4f b) {
   // Scale b.
   v1 = _mm_mul_ps(scale, v2);
 
+  _mm_storeu_ps((float *)&r, v1);
+
+  return r;
+}
+
+/**
+ * When the component of vector x is not 0, select the corresponding component
+ * of a, otherwise select b.
+ * 
+ * @param x
+ * @param a
+ * @param b
+ */
+static inline v4f v4fseleq(v4f x, v4f a, v4f b) {
+  v4f r;
+  __m128 v1, v2, v3, mask;
+
+  v1 = _mm_loadu_ps((float *)&x);
+  v2 = _mm_loadu_ps((float *)&a);
+  v3 = _mm_loadu_ps((float *)&b);
+
+  mask = _mm_cmpneq_ps(v1, _mm_setzero_ps());
+
+  v1 = _mm_or_ps(
+    _mm_and_ps(mask, v2),
+    _mm_andnot_ps(mask, v3)
+  );
+  _mm_storeu_ps((float *)&r, v1);
+
+  return r;
+}
+
+/**
+ * When the component of vector x is larger than 0, select the corresponding
+ * component of a, otherwise select b.
+ * 
+ * @param x
+ * @param a
+ * @param b
+ */
+static inline v4f v4fselgt(v4f x, v4f a, v4f b) {
+  v4f r;
+  __m128 v1, v2, v3, mask;
+
+  v1 = _mm_loadu_ps((float *)&x);
+  v2 = _mm_loadu_ps((float *)&a);
+  v3 = _mm_loadu_ps((float *)&b);
+
+  mask = _mm_cmpgt_ps(v1, _mm_setzero_ps());
+    
+  v1 = _mm_or_ps(
+    _mm_and_ps(mask, v2),
+    _mm_andnot_ps(mask, v3)
+  );
   _mm_storeu_ps((float *)&r, v1);
 
   return r;

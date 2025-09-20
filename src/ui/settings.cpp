@@ -1,8 +1,6 @@
 #include "imgui.h"
 
-#include "ui/gui.h"
-#include "ui/menu.h"
-#include "ui/settings.h"
+#include "ui/ui.h"
 
 void gui_windowSettings() {
   ImGuiIO &io = ImGui::GetIO();
@@ -38,7 +36,8 @@ void gui_windowSettings() {
   ImGui::Text("Full-takeover by default");
   gui_displayTips(
     "The plugin will automatically obtain mouse increments and calculate"
-    "rotations, instead of using the game's original calculations.");
+    "rotations, instead of using the game's original calculations.",
+    1);
   ImGui::Checkbox(
     "##settingsCheckbox3",
     (bool *)&gOptions.freecam.fullTakeover);

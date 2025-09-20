@@ -1,9 +1,7 @@
 #ifndef __FPV_H__
 #define __FPV_H__
 
-#include "mth/aabb.h"
-#include "mth/vector.h"
-#include "aliases.h"
+#include "internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +17,9 @@ typedef i08 (__fastcall *FnFpvReset)(
   v4f pos, v4f rot, i32 flags);
 
 typedef struct {
+  // User-defined flags.
+  u32 flags;
+
   // Movement. Only the x, y and z components are used.
   v4f pos;
   v4f vel;
@@ -28,6 +29,9 @@ typedef struct {
   v4f rot;
   v4f avel;
   v4f aacc;
+
+  // Rotation matrix and position vector.
+  m44 matrix;
 } FPV_t;
 
 i08 fpv_checkCollision(AABB_t *aabb, v4f *velocity, f32 timeElapsed);

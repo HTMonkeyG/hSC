@@ -3,7 +3,7 @@
 
 #include <immintrin.h>
 
-#include "aliases.h"
+#include "internal.h"
 #include "mth/vector.h"
 
 #ifdef __cplusplus
@@ -15,6 +15,7 @@ extern "C" {
 typedef union {
   f32 m[16];
   f32 n[4][4];
+  v4f rows[4];
   struct {
     v4f row1;
     v4f row2;

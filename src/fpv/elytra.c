@@ -1,11 +1,6 @@
 #include <math.h>
-
-#include <stdio.h>
-
-#include "elytra.h"
-#include "mth/vector.h"
 #include "fpv/fpv.h"
-#include "mth/macros.h"
+#include "fpv/elytra.h"
 
 static const v4f size = {0.1f, 0.1f, 0.1f, 0.1f};
 
@@ -20,13 +15,17 @@ static v4f calculateViewVector(v4f rot) {
 }
 
 /**
- * Accelerate fpv with keyboard inputs.
+ * Using keyboard input and fireworks physics logic to accelerate fpv.
+ * 
+ * @param mDelta Movement delta, directly from keyboard.
+ * @param view The view vector of the moving point.
+ * @param timeElapsed Time elapsed since last frame.
  */
-static inline void elytraFirework(v4f mDelta, f32 timeElapsed) {
-  v4f view = calculateViewVector(gElytra.rot)
-    // Convert m/s to m/gt.
-    , velocity = v4fscale(gElytra.vel, 1 / 20.0f)
-    , tmp1;
+static inline void elytraFirework(v4f mDelta, v4f view, f32 timeElapsed) {
+  v4f velocity, tmp1;
+
+  // Convert m/s to m/gt.
+  velocity = v4fscale(gElytra.vel, 1 / 20.0f);
 
   // Acceleration, in m/gt^2.
   // view * 0.1 + (view * 1.5 - velocity) * 0.5
@@ -55,23 +54,27 @@ static inline void elytraFirework(v4f mDelta, f32 timeElapsed) {
  * 
  * All of the calculations is done under the time unit of gt, and then
  * convert to second.
+ * 
+ * @param view The view vector of the moving point.
+ * @param timeElapsed Time elapsed since last frame.
  */
-static inline void elytraTravel(f32 timeElapsed) {
-  v4f view = calculateViewVector(gElytra.rot)
-    // Convert to m/gt.
-    , vel = v4fscale(gElytra.vel, 1 / 20.0f)
-    , tmpVec, deltaVel;
+static inline void elytraTravel(v4f view, f32 timeElapsed) {
+  v4f vel, tmpVec, deltaVel;
   f32 timeGt = timeElapsed * 20.0f
     , viewXZLen = sqrtf(view.x * view.x + view.z * view.z)
-    , horizonSpeed = sqrtf(vel.x * vel.x + vel.z * vel.z)
-    , cosPitch2 = cosf(gElytra.rot.y)
-    // Gravitational acceleration.
+    // Equals to cosf(gElytra.rot.y) * cosf(gElytra.rot.y).
+    , cosPitch2 = viewXZLen * viewXZLen
+    , sinPitch = view.y
+    // The change in velocity caused by gravity, in m/gt.
     , gravity = -0.08f * timeGt
-    , friction, tmp;
+    , horizonSpeed, friction, tmp;
   AABB_t aabb;
 
-  cosPitch2 *= cosPitch2;
+  // Convert to m/gt.
+  vel = v4fscale(gElytra.vel, 1 / 20.0f);
   vel.y += gravity * (1.0f - 0.75f * cosPitch2);
+
+  horizonSpeed = sqrtf(vel.x * vel.x + vel.z * vel.z);
 
   // In order to adapt different update frequency in different FPS, we
   // multiplied `timeGt` in every accelerate operation, which means treating
@@ -86,9 +89,9 @@ static inline void elytraTravel(f32 timeElapsed) {
         v4fnew(view.x * tmp / viewXZLen, tmp, view.z * tmp / viewXZLen, 0));
     }
 
-    if (gElytra.rot.y > 0.0f) {
+    if (sinPitch > 0.0f) {
       // Apply speed improvement.
-      tmp = horizonSpeed * sinf(gElytra.rot.y) * 0.04f * timeGt;
+      tmp = horizonSpeed * sinPitch * 0.04f * timeGt;
       vel = v4fadd(
         v4fnew(-view.x * tmp / viewXZLen, tmp * 3.2f, -view.z * tmp / viewXZLen, 0),
         vel);
@@ -135,31 +138,66 @@ FPV_t *fpvElytra_init(v4f pos, v4f rot, i32 flags) {
     gElytra.pos = pos;
   if (flags & FPVRST_ROT)
     gElytra.rot = rot;
+
+  eulerToRotationXYZ(gElytra.rot, gElytra.matrix.rows);
+  gElytra.matrix.row4 = gElytra.pos;
+
   return &gElytra;
 }
 
-/**
- * Minecraft's elytra physics, reproduce from the description in Chinese
- * Minecraft Wiki (https://zh.minecraft.wiki/w/%E9%9E%98%E7%BF%85).
- * 
- * The time unit in Minecraft's code is 'gt', 1/20 of 1 second, but the time
- * unit in our codes is 'second', so we have added a lot of unit conversions
- * to make the operation feels the same as Minecraft.
- * 
- * We assume that this function is only executed once in every physic frame.
- * 
- * @param mDelta Movement delta, directly from keyboard.
- * @param fDelta Rotation delta, in the unit of 'rad'.
- * @param timeElapsed Time elapsed since last frame.
- */
 FPV_t *fpvElytra_update(v4f mDelta, v4f fDelta, f32 timeElapsed) {
-  // Update rotation.
-  gElytra.rot = v4fadd(gElytra.rot, fDelta);
-  gElytra.rot.y = clamp(gElytra.rot.y, -PI_F * 0.4975f, PI_F * 0.4975f);
-  gElytra.rot.z = gElytra.rot.w = 0;
+  v4f view, factor;
+  m44 dRot = {0};
+  const v4f rotationFriction1 = { 1.0f, 1.0f, 1.0f, 1.0f }
+    , rotationFriction2 = { 0.1f, 0.1f, 0.1f, 0.1f };
 
-  elytraFirework(mDelta, timeElapsed);
-  elytraTravel(timeElapsed);
+  // Apply smooth effect.
+  if (gElytra.flags & FPVELYTRA_SMOOTH) {
+    factor = v4fseleq(v4fabs(fDelta), rotationFriction1, rotationFriction2);
+    // Accelerate to fDelta (rad/s) with aacc = k * (fDelta - avel). The
+    // factor, or k, is different when fDelta equals 0.
+    gElytra.aacc = v4fmul(v4fsub(fDelta, gElytra.avel), factor);
+    gElytra.avel = v4fadd(gElytra.avel, v4fscale(gElytra.aacc, timeElapsed));
+  } else {
+    gElytra.aacc = V4FZERO;
+    gElytra.avel = fDelta;
+  }
+
+  // Update rotation.
+  if (gElytra.flags & FPVELYTRA_ROLL) {
+    eulerToRotationXYZ(gElytra.avel, dRot.rows);
+    m44mul(&gElytra.matrix, &dRot, &gElytra.matrix);
+    view = v4fscale(gElytra.matrix.row3, -1.0f);
+  } else {
+    gElytra.rot = v4fadd(gElytra.rot, gElytra.avel);
+    gElytra.rot.y = m_clamp(gElytra.rot.y, -PI_F * 0.4975f, PI_F * 0.4975f);
+    gElytra.rot.z = gElytra.rot.w = 0;
+    view = calculateViewVector(gElytra.rot);
+    // The physical update does not modify the rotation, so we can calculate
+    // the matrix before it.
+    eulerToRotationXYZ(gElytra.rot, gElytra.matrix.rows);
+  }
+
+  // Update physical state.
+  elytraFirework(mDelta, view, timeElapsed);
+  elytraTravel(view, timeElapsed);
+
+  // Update position.
+  gElytra.matrix.row4 = gElytra.pos;
 
   return &gElytra;
+}
+
+void fpvElytra_enableRoll(i08 enable) {
+  if (enable)
+    gElytra.flags |= FPVELYTRA_ROLL;
+  else
+    gElytra.flags &= ~FPVELYTRA_ROLL;
+}
+
+void fpvElytra_enableSmooth(i08 enable) {
+  if (enable)
+    gElytra.flags |= FPVELYTRA_SMOOTH;
+  else
+    gElytra.flags &= ~FPVELYTRA_SMOOTH;
 }

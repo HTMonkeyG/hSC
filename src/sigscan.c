@@ -1,7 +1,4 @@
-#include <windows.h>
-
-#include "sigscan.h"
-#include "stdio.h"
+#include "internal.h"
 
 /**
  * Convert signature string to byte pattern.

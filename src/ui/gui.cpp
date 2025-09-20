@@ -1,31 +1,33 @@
 #include <math.h>
+#include <windows.h>
 
 #include "imgui.h"
+#ifndef USE_HTML
 #include "imgui_impl_win32.h"
 #include "imgui_impl_dx12.h"
 #include "uglhook.h"
+#endif
+#include "includes/htmod.h"
 
-#include "setup.h"
 #include "log.h"
-#include "ui/gui.h"
-#include "ui/input.h"
-#include "ui/settings.h"
-#include "ui/menu.h"
+#include "ui/ui.h"
 
-static char gPrefPath[260]
-  , gIniPath[260];
+static char gIniPath[260];
+static wchar_t gPrefPath[260];
 
 GUI_t gGui = {0};
 GUIState_t gState = {0};
 GUIOptions_t gOptions = {
   .general = {
-    .mouseSensitivity = 1.0f,
+    .mouseSensitivity = 3.35f,
     .verticalSenseScale = 1.0f
   },
   .freecam = {
     .swapRollYaw = 0
   }
 };
+
+#ifndef USE_HTML
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
   HWND hWnd,
@@ -57,7 +59,7 @@ static void gui_wndProcEx(
       if (!gState.enable)
         return;
 
-      if (gState.overrideMode == OM_FREE) {
+      if (gState.majorMode == OM_FREE) {
         // Freecam mode.
         if (
           wParam == 'W'
@@ -70,7 +72,7 @@ static void gui_wndProcEx(
           || wParam == VK_SHIFT
         )
           *uBlock = 1;
-      } else if (gState.overrideMode == OM_FPV) {
+      } else if (gState.majorMode == OM_FPV) {
         // FPV mode.
         if (
           wParam == 'W'
@@ -141,16 +143,16 @@ i08 gui_init(HMODULE hModule) {
     [](const DXGI_SWAP_CHAIN_DESC *sDesc, void *lpUser) -> void {
       SetEvent(gGui.hInit);
 
-      f32 dpiScale;
       ImGui::CreateContext();
       ImGui::StyleColorsDark();
 
       ImGuiIO &io = ImGui::GetIO(); (void)io;
       io.Fonts->AddFontDefault();
+      LOGI("Try to load imgui.ini at: %s\n", gIniPath);
       io.IniFilename = gIniPath;
 
       ImGuiStyle &style = ImGui::GetStyle();
-      dpiScale = ImGui_ImplWin32_GetDpiScaleForHwnd(sDesc->OutputWindow);
+      f32 dpiScale = ImGui_ImplWin32_GetDpiScaleForHwnd(sDesc->OutputWindow);
       style.ScaleAllSizes(dpiScale);
       io.FontGlobalScale = dpiScale;
 
@@ -234,15 +236,13 @@ i08 gui_update() {
     gui_windowSettings();
 
   // Handle keyboard input.
-  if (gState.overrideMode == OM_FREE)
-    gui_inputFreecam();
-  if (gState.overrideMode == OM_FPV)
-    gui_inputFPV();
+  if (gState.enable)
+    gui_handleInput();
 
   // Rendering.
   ImGui::EndFrame();
 
-  D3D12Hooks::FrameContext& currentFrameContext
+  D3D12Hooks::FrameContext &currentFrameContext
     = D3D12Hooks::gFrameContext[D3D12Hooks::gSavedSwapChain->GetCurrentBackBufferIndex()];
 
   currentFrameContext.commandAllocator->Reset();
@@ -277,7 +277,11 @@ i08 gui_update() {
 
   D3D12Hooks::gCommandQueue->ExecuteCommandLists(
     1,
-    reinterpret_cast<ID3D12CommandList* const*>(&D3D12Hooks::gCommandList));
+    reinterpret_cast<ID3D12CommandList *const *>(&D3D12Hooks::gCommandList));
 
   return 1;
 }
+
+#else
+
+#endif

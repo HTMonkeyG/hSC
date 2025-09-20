@@ -6,9 +6,21 @@
 // <https://www.github.com/HTMonkeyG/hSC>.
 // ----------------------------------------------------------------------------
 
-#include "dllmain.h"
+#include <windows.h>
+#include <stdio.h>
+#include <math.h>
+#include "includes/htmod.h"
+#include "MinHook.h"
 
-LPVOID baseAddr;
+#include "internal.h"
+#include "ui/ui.h"
+#include "log.h"
+
+static LPVOID baseAddr;
+
+HMODULE hModuleDll;
+
+#ifndef USE_HTML
 
 static DWORD WINAPI onAttach(LPVOID lpParam) {
   HMODULE hModule = (HMODULE)lpParam;
@@ -43,6 +55,8 @@ static DWORD WINAPI onAttach(LPVOID lpParam) {
   return 0;
 }
 
+#endif
+
 BOOL APIENTRY DllMain(
   HMODULE hModule,
   DWORD dwReason,
@@ -57,6 +71,9 @@ BOOL APIENTRY DllMain(
       // Not the correct game process.
       return TRUE;
 
+    hModuleDll = hModule;
+
+#ifndef USE_HTML
     recreateConsole();
 
     LOGI("hSC injected.\n");
@@ -71,6 +88,9 @@ BOOL APIENTRY DllMain(
       return TRUE;
     }
     LOGI("CreateThread(): 0x%lX\n", threadId);
+#else
+    MH_Initialize();
+#endif
   } else if (dwReason == DLL_PROCESS_DETACH) {
     LOGI("hSC detached.\n");
 

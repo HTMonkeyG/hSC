@@ -1,14 +1,13 @@
 #include <math.h>
 
+#include "internal.h"
+#include "mth/macros.h"
 #include "mth/matrix.h"
-#include "setup.h"
+#include "mth/aabb.h"
+#include "mth/euler.h"
 #include "fpv/fpv.h"
 #include "fpv/elytra.h"
-#include "ui/gui.h"
-#include "ui/input.h"
-#include "mth/aabb.h"
-#include "camera.h"
-#include "hooked.h"
+#include "ui/ui.h"
 
 // ----------------------------------------------------------------------------
 // [SECTION] Declarations and definitions.
@@ -22,57 +21,11 @@
 typedef u64 (__fastcall *FnWorld_interactionTest)(
   u64, v4f *, v4f *, float, v4f *, i08 *);
 
-// External variables.
-// gTramp trampoline functions defined in hooked.c
-extern SetupFunctions_t gTramp;
-// gFpv defined in fpv.c
-extern FPV_t gFpv;
+InjectCamera gInjectCamera = {0};
 
 // ----------------------------------------------------------------------------
 // [SECTION] Static helper functions.
 // ----------------------------------------------------------------------------
-
-/**
- * Calculate rotation matrix from euler angle, in the order of yaw, pitch,
- * roll.
- * 
- * @param euler The x, y and z component of this vector indicates the yaw,
- * pitch and roll angles.
- * @param matrix The 3x3 rotation matrix stored in three v4f in rows.
- */
-static inline void eulerToRotationXYZ(v4f euler, v4f *matrix) {
-  f32 cy = cos(euler.x)
-    , sy = sin(euler.x)
-    , cp = cos(euler.y)
-    , sp = sin(euler.y)
-    , cr = cos(euler.z)
-    , sr = sin(euler.z);
-  
-  // R00
-  matrix[0].x = cr * cy + sr * sp * sy;
-  // R01
-  matrix[0].y = sr * cp;
-  // R02
-  matrix[0].z = -cr * sy + sr * sp * cy;
-  
-  // R10
-  matrix[1].x = cr * sp * sy - sr * cy;
-  // R11
-  matrix[1].y = cr * cp;
-  // R12
-  matrix[1].z = sr * sy + cr * sp * cy; 
-  
-  // R20
-  matrix[2].x = cp * sy;
-  // R21
-  matrix[2].y = -sp;
-  // R22
-  matrix[2].z = cp * cy;
-}
-
-static inline void rotationToEulerXYZ(v4f *matrix, v4f euler) {
-
-}
 
 /**
  * Encapsulation for invocations of World::interactionCheck().
@@ -191,6 +144,32 @@ static void updatePropFPV(SkyCameraProp *this) {
   ;
 }
 
+static void updatePropStatic(SkyCameraProp *this) {
+  if (gState.overrideDir && gState.cameraMode != CM_PLACE) {
+    // Override camera rotations.
+    this->rotateXAnim = this->rotateX = (gState.rot.x - 180.0f) / 180.0f * PI_F;
+    this->rotateYAnim = this->rotateY = -gState.rot.y / 180.0f * PI_F;
+    this->rotateSpeedX = this->rotateSpeedY = 0;
+  }
+
+  // Override or sync camera params.
+  OVERRIDE_3(
+    gState.overrideScale,
+    this->scaleAnim,
+    this->scale,
+    gState.scale);
+  OVERRIDE_3(
+    gState.overrideFocus,
+    this->focusAnim,
+    this->focus,
+    gState.focus);
+  OVERRIDE_3(
+    gState.overrideBrightness,
+    this->brightnessAnim,
+    this->brightness,
+    gState.brightness);
+}
+
 /**
  * Calculate the rotation matrix and camera pos with gui data, and save
  * caculated data to gState.
@@ -199,11 +178,11 @@ void updatePropMain(SkyCameraProp *this) {
   if (!gState.enable)
     return;
 
-  if (gState.overrideMode == OM_SET)
+  if (gState.majorMode == OM_SET)
     updatePropSet(this);
-  else if (gState.overrideMode == OM_FREE)
+  else if (gState.majorMode == OM_FREE)
     updatePropFreecam(this);
-  else if (gState.overrideMode == OM_FPV)
+  else if (gState.majorMode == OM_FPV)
     updatePropFPV(this);
 }
 
@@ -365,21 +344,25 @@ void preupdateFPV(MainCamera *this) {
   if (gState.resetPosFlag) {
     gState.resetPosFlag = 0;
     (void)fpvElytra_init(this->context1.cameraPos, V4FZERO, FPVRST_POS);
+    fpvElytra_enableRoll(1);
+    fpvElytra_enableSmooth(1);
     return;
   }
 
   mouseDelta = gui_getFacingDeltaRad();
   deltaRot.x = -mouseDelta.x;
   deltaRot.y = mouseDelta.y;
+  deltaRot.z = gState.facingInput.z * gGui.timeElapsedSecond;
 
   // Update elytra.
   (void)fpvElytra_update(gState.movementInput, deltaRot, gGui.timeElapsedSecond);
 
-  gState.rot = gElytra.rot;
-  gState.pos = gElytra.pos;
+  //gState.rot = gElytra.rot;
+  //gState.pos = gElytra.pos;
 
-  eulerToRotationXYZ(gState.rot, gState.mat);
-  gState.mat[3] = gState.pos;
+  //eulerToRotationXYZ(gState.rot, gState.mat);
+  //gState.mat[3] = gState.pos;
+  memcpy(gState.mat, &gElytra.matrix, 4 * sizeof(v4f));
 
   // Override matrix and position.
   gState.usePos = gState.useMatrix = 1;
@@ -409,11 +392,11 @@ void preupdateCameraMain(MainCamera *this) {
 
   gState.useMatrix = gState.usePos = 0;
 
-  if (gState.overrideMode == OM_SET)
+  if (gState.majorMode == OM_SET)
     preupdateSet(this);
-  else if (gState.overrideMode == OM_FREE)
+  else if (gState.majorMode == OM_FREE)
     preupdateFreecam(this);
-  else if (gState.overrideMode == OM_FPV)
+  else if (gState.majorMode == OM_FPV)
     preupdateFPV(this);
 }
 

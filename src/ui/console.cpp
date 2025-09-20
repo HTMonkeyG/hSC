@@ -2,8 +2,8 @@
 #include <stdio.h>
 #include "imgui.h"
 
-#include "aliases.h"
-#include "ui/gui.h"
+#include "internal.h"
+#include "ui/ui.h"
 
 static ImVector<char *> gLines;
 

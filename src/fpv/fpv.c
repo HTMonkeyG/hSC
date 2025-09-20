@@ -1,6 +1,4 @@
 #include "fpv.h"
-#include "hooked.h"
-#include "types.h"
 
 /**
  * Encapsulation for invocations of World::interactionCheck().

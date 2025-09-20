@@ -2,7 +2,7 @@
 #include <stdarg.h>
 
 #include "log.h"
-#include "aliases.h"
+#include "internal.h"
 
 void recreateConsole() {
 #ifdef DEBUG_CONSOLE

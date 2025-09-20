@@ -5,13 +5,13 @@ AABB_t *aabb_fromPoints(AABB_t *aabb, v4f p1, v4f p2) {
   if (!aabb)
     return NULL;
 
-  aabb->lower.x = min(p1.x, p2.x);
-  aabb->lower.y = min(p1.y, p2.y);
-  aabb->lower.z = min(p1.z, p2.z);
+  aabb->lower.x = m_min(p1.x, p2.x);
+  aabb->lower.y = m_min(p1.y, p2.y);
+  aabb->lower.z = m_min(p1.z, p2.z);
 
-  aabb->upper.x = max(p1.x, p2.x);
-  aabb->upper.y = max(p1.y, p2.y);
-  aabb->upper.z = max(p1.z, p2.z);
+  aabb->upper.x = m_max(p1.x, p2.x);
+  aabb->upper.y = m_max(p1.y, p2.y);
+  aabb->upper.z = m_max(p1.z, p2.z);
 
   return aabb;
 }

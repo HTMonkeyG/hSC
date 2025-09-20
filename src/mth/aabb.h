@@ -1,8 +1,8 @@
 #ifndef __AABB_H__
 #define __AABB_H__
 
-#include "mth/vector.h"
 #include "aliases.h"
+#include "mth/vector.h"
 
 #ifdef __cplusplus
 extern "C" {

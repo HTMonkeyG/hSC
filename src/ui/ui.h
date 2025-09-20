@@ -1,12 +1,13 @@
-#ifndef __GUI_H__
-#define __GUI_H__
+#ifndef __UI_H__
+#define __UI_H__
 
-#include <windows.h>
-
-#include "mth/vector.h"
-#include "aliases.h"
+#include "internal.h"
 
 #define WM_USER_EXIT (0x8000 + 1)
+
+#define MM_STATIC (0x00)
+#define MM_DYNAMIC (0x01)
+#define MM_ANIMATION (0x02)
 
 #define OM_SET (0x00)
 #define OM_FREE (0x01)
@@ -30,7 +31,7 @@ typedef struct {
   // General controller.
   i08 enable;
   i08 noOriginalUi;
-  i32 overrideMode;
+  i32 majorMode;
   i32 cameraMode;
   i08 resetPosFlag;
 
@@ -98,6 +99,25 @@ i08 gui_deinit();
 i08 gui_waitForInit();
 i08 gui_waitForDll(DWORD *lastError);
 i08 gui_update();
+
+extern v4f gMouseDeltaPx;
+
+/**
+ * Handle keyboard and mouse inputs.
+ */
+void gui_handleInput();
+
+/**
+ * Convert mouse movement to radians.
+ */
+v4f gui_getFacingDeltaRad();
+
+void gui_displayTips(const char *desc, i08 sameLine);
+void gui_windowMain();
+
+void gui_windowSettings();
+
+void gui_windowConsole();
 
 #ifdef __cplusplus
 }

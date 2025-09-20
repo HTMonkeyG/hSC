@@ -24,19 +24,20 @@ CXX = g++
 CFLAGS = -Wall -Wformat -O3 -ffunction-sections -fdata-sections -static -flto -s -mavx -msse
 CFLAGS += -I./src
 # Include ImGui.
-CFLAGS += -I./libraries/imgui-1.91.9b -I./libraries/imgui-1.91.9b/backends
+CFLAGS += -I./libraries/htmodloader/includes/imgui-1.91.9b -I./libraries/htmodloader/includes/imgui-1.91.9b/backends
 # Include MinHook.
-CFLAGS += -I./libraries/MinHook/include
+CFLAGS += -I./libraries/htmodloader/includes/htmodloader
 # Include UGLHook.
-CFLAGS += -I./libraries/UGLHook/src
+CFLAGS += -I./libraries/MinHook/include
 # Macros.
-#CFLAGS += -DNDEBUG
+CFLAGS += -DNDEBUG -DUSE_HTML
 
-LFLAGS = -Wl,--gc-sections,--version-script=$(VERSION_SCRIPT),-O3,--as-needed
+LFLAGS = -Wl,--gc-sections,-O3,--as-needed,--version-script=$(VERSION_SCRIPT)
 LFLAGS += -lgdi32 -ldwmapi -ld3dcompiler -lstdc++
+LFLAGS += -L./libraries/htmodloader/lib -lhtmodloader
 LFLAGS += -L./libraries/MinHook -lMinHook
-LFLAGS += -L./libraries/imgui-1.91.9b -limgui -limgui_impl_win32 -limgui_impl_dx12
-LFLAGS += -L./libraries/UGLHook -luglhook
+#LFLAGS += -L./libraries/imgui-1.91.9b -limgui -limgui_impl_win32 -limgui_impl_dx12
+#LFLAGS += -L./libraries/UGLHook -luglhook
 
 vpath %.c $(SRC_DIRS)
 vpath %.cpp $(SRC_DIRS)
