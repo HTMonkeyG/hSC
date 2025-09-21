@@ -189,8 +189,7 @@ void preupdateFreecam(MainCamera *this) {
 }
 
 void preupdateStatic(MainCamera *this) {
-  v4f *pos, *dir, *gsRot
-    , rot;
+  v4f *pos, *dir, *gsRot;
 
   dir = &this->context1.mat3;
   // Pointer to original camera pos caculated by the game.
@@ -202,11 +201,11 @@ void preupdateStatic(MainCamera *this) {
   gState.mat[3] = *pos;
 
   if (gState.overrideDir) {
-    // Override facing directions.
-    rot = v4fscale(gState.rot, PI_F / 180.0f);
+    // Convert facing directions to radians.
+    gState.rot = v4fscale(gState.rotDeg, PI_F / 180.0f);
     // Copy the rotation matrix to gState. We must provide the matrix to the
     // gui.
-    eulerToRotationXYZ(rot, gState.mat);
+    eulerToRotationXYZ(gState.rot, gState.mat);
   } else {
     // Sync original facing directions to overlay. We assume that the rotation
     // matrix is in the order of yaw-pitch-roll, so we can apply the following
@@ -215,25 +214,24 @@ void preupdateStatic(MainCamera *this) {
     // Get the pitch angle. When the camera looks "up", or, the foward vector
     // "raises", the pitch angle actually decreases, so there's a negative sign
     // here.
-    gsRot->y = -asinf(dir->y) / PI_F * 180.0f;
+    gsRot->y = -asinf(dir->y);
 
     // Get the yaw angle.
     if (dir->x == 0 && dir->z == 0)
       // Avoid dividing by 0, although this case won't happen in normal games.
       gsRot->x = 0;
-    else {
-      // There will be some floating point errors here, but it's fine.
-      gsRot->x = atan2f(dir->x, dir->z) / PI_F * 180.0f;
-      gsRot->x += gsRot->x < 0 ? 360.0f : 0;
-    }
+    else
+      // There will be some floating point errors here, but we don't care about
+      // it.
+      gsRot->x = atan2f(dir->x, dir->z);
 
     // Get the roll angle. This value is always 0 in SkyCamera calls.
     if (this->context1.mat1.y == 0 && this->context1.mat2.y == 0)
       gsRot->z = 0;
-    else {
-      gsRot->z = atan2f(this->context1.mat1.y, this->context1.mat2.y) / PI_F * 180.0f;
-      gsRot->z += gsRot->z < 0 ? 360.0f : 0;
-    }
+    else
+      gsRot->z = atan2f(this->context1.mat1.y, this->context1.mat2.y);
+
+    gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
   }
 
   gState.usePos = gState.overridePos;
