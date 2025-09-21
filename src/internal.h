@@ -10,6 +10,8 @@
 #include "mth/euler.h"
 #include "mth/aabb.h"
 
+#define HSC_VERSION "0.1.2"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -241,7 +243,12 @@ typedef struct {
   i08 usePos;
 } InjectCamera;
 
+// Unused. Inject our camera in the game's camera system.
 extern InjectCamera gInjectCamera;
+
+void preupdateStatic(MainCamera *);
+void preupdateDynamic(MainCamera *);
+void preupdateAnim(MainCamera *);
 
 void updatePropMain(SkyCameraProp *);
 void preupdateCameraMain(MainCamera *);

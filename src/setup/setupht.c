@@ -33,10 +33,6 @@ void HTMLAPI HTModRenderGui(
   // Draw menus.
   if (gGui.isOpen)
     gui_windowMain();
-  else
-    gGui.showSettings = 0;
-  if (gGui.showSettings)
-    gui_windowSettings();
 
   // Handle keyboard input.
   if (gState.enable)

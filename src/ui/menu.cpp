@@ -21,70 +21,41 @@ void gui_displayTips(const char *desc, i08 sameLine) {
   }
 }
 
-static void gui_subMenuSet() {
-  ImGui::SeparatorText("Set Camera Params");
-
-  // Camera position input.
-  ImGui::Checkbox("##cb1", (bool *)&gState.overridePos);
-  ImGui::SameLine();
-  ImGui::InputFloat3("Pos", (float *)&gState.pos);
-
-  // Camera rotation input.
-  ImGui::Checkbox("##cb2", (bool *)&gState.overrideDir);
-  ImGui::SameLine();
-  ImGui::InputFloat3("Rotation", (float *)&gState.rot);
-
-  // Clamp camera facing.
-  gState.rot.x = fmodf(gState.rot.x, 360.0f);
-  gState.rot.z = fmodf(gState.rot.z, 360.0f);
-  gState.rot.y = m_clamp(gState.rot.y, -89.75f, 89.75f);
-
-  ImGui::BeginDisabled(gState.cameraMode == 3);
-
-  // Camera scale input.
-  ImGui::Checkbox("##cb3", (bool *)&gState.overrideScale);
-  ImGui::SameLine();
-  ImGui::DragFloat("Scale", &gState.scale, .01f, 0.0f, 1.0f);
-
-  // Camera focus(blur) input.
-  ImGui::Checkbox("##cb4", (bool *)&gState.overrideFocus);
-  ImGui::SameLine();
-  ImGui::DragFloat("Focus", &gState.focus, .01f, 0.0f, 1.0f);
-
-  // Camera brightness input.
-  ImGui::Checkbox("##cb5", (bool *)&gState.overrideBrightness);
-  ImGui::SameLine();
-  ImGui::DragFloat("Brightness", &gState.brightness, .01f, 0.0f, 1.0f);
-
-  ImGui::EndDisabled();
+#define InputSingleAxis(n, l, p, c) (void)(\
+  ImGui::SetCursorPosX(c),\
+  ImGui::AlignTextToFramePadding(),\
+  ImGui::Text(n),\
+  ImGui::SameLine(),\
+  ImGui::InputScalar(l, ImGuiDataType_Float, p, &STEP, nullptr, "%.3f")\
+)
+static void gui_inputXYZ(f32 *v, f32 cursorX) {
+  ImGui::PushID((void *)v);
+  InputSingleAxis("X", "##X", v, cursorX);
+  InputSingleAxis("Y", "##Y", v + 1, cursorX);
+  InputSingleAxis("Z", "##Z", v + 2, cursorX);
+  ImGui::PopID();
 }
+#undef InputSingleAxis
 
 static void gui_subMenuStatic() {
   ImGui::SeparatorText("Set Camera Params");
 
   // Camera position input.
-  ImGui::Checkbox("Position", (bool *)&gState.overridePos);
-  ImGui::InputScalarN("##PosInputs", ImGuiDataType_Float, (float *)&gState.pos, 3, &STEP, nullptr, "%.3f");
+  ImGui::Checkbox("Pos", (bool *)&gState.overridePos);
+  ImGui::SameLine();
+  gui_inputXYZ(&gState.pos.x, ImGui::GetCursorPosX());
 
   // Camera rotation input.
-  ImGui::Checkbox("Rotation", (bool *)&gState.overrideDir);
-
-  ImGui::Text("X");
+  ImGui::Checkbox("Rot", (bool *)&gState.overrideDir);
   ImGui::SameLine();
-  ImGui::InputScalar("##RotInputX", ImGuiDataType_Float, &gState.rot.x, &STEP, nullptr, "%.3f");
-  ImGui::Text("Y");
-  ImGui::SameLine();
-  ImGui::InputScalar("##RotInputY", ImGuiDataType_Float, &gState.rot.y, &STEP, nullptr, "%.3f");
-  ImGui::Text("Z");
-  ImGui::SameLine();
-  ImGui::InputScalar("##RotInputZ", ImGuiDataType_Float, &gState.rot.z, &STEP, nullptr, "%.3f");
+  gui_inputXYZ(&gState.rotDeg.x, ImGui::GetCursorPosX());
 
   // Clamp camera facing.
-  gState.rot.x = fmodf(gState.rot.x, 360.0f);
-  gState.rot.z = fmodf(gState.rot.z, 360.0f);
-  gState.rot.y = m_clamp(gState.rot.y, -89.75f, 89.75f);
+  gState.rotDeg.x = fmodf(gState.rotDeg.x, 360.0f);
+  gState.rotDeg.z = fmodf(gState.rotDeg.z, 360.0f);
+  gState.rotDeg.y = m_clamp(gState.rotDeg.y, -89.75f, 89.75f);
 
-  ImGui::BeginDisabled(gState.cameraMode == 3);
+  ImGui::BeginDisabled(gState.cameraMode == CM_WHISKER);
 
   // Camera scale input.
   ImGui::Checkbox("##cb3", (bool *)&gState.overrideScale);
@@ -105,46 +76,16 @@ static void gui_subMenuStatic() {
 
   ImGui::SeparatorText("Freecam params");
 
-  ImGui::Checkbox("Check collision", (bool *)&gState.freecamCollision);
-  ImGui::DragFloat("Rotate Speed", &gState.freecamRotateSpeed, .01f, 0, 10.0f);
-  ImGui::DragFloat("Speed", &gState.freecamSpeed, .01f, 0, 100.0f);
   if (ImGui::Button("Reset pos"))
     gState.resetPosFlag = 1;
-}
-
-static void gui_subMenuFreecam() {
-  ImGui::SeparatorText("Free camera");
-
-  ImGui::Combo(
-    "Mode",
-    &gState.freecamMode,
-    FREECAMMODES,
-    IM_ARRAYSIZE(FREECAMMODES));
 
   ImGui::Checkbox("Check collision", (bool *)&gState.freecamCollision);
-
-  ImGui::DragFloat("Rotate Speed", &gState.freecamRotateSpeed, .01f, 0, 10.0f);
-
-  ImGui::DragFloat("Speed", &gState.freecamSpeed, .01f, 0, 100.0f);
-  if (ImGui::Button("Reset pos"))
-    gState.resetPosFlag = 1;
-}
-
-static void gui_subMenuFPV() {
-  ImGui::SeparatorText("FPV");
-
-  ImGui::Combo(
-    "Mode",
-    &gState.fpvMode,
-    FPVMODES,
-    IM_ARRAYSIZE(FPVMODES));
-
-  if (ImGui::Button("Reset pos"))
-    gState.resetPosFlag = 1;
+  ImGui::DragFloat("Rotate speed", &gState.freecamRotateSpeed, .01f, 0, 10.0f);
+  ImGui::DragFloat("Movement speed", &gState.freecamSpeed, .01f, 0, 100.0f);
 }
 
 static void gui_subMenuDynamic() {
-  ImGui::SeparatorText("FPV");
+  ImGui::SeparatorText("Dynamic mode");
 
   ImGui::Combo(
     "Mode",
@@ -157,26 +98,43 @@ static void gui_subMenuDynamic() {
 }
 
 static void gui_subMenuAnim() {
-  ImGui::SeparatorText("FPV");
-
-  ImGui::Combo(
-    "Mode",
-    &gState.fpvMode,
-    FPVMODES,
-    IM_ARRAYSIZE(FPVMODES));
-
-  if (ImGui::Button("Reset pos"))
-    gState.resetPosFlag = 1;
+  ImGui::SeparatorText("Animation mode");
+  // TODO: Under development.
 }
 
-static void gui_navMain() {
-  if (ImGui::BeginMenuBar()) {
-    if (ImGui::BeginMenu("Edit")) {
-      ImGui::MenuItem("Preferences", nullptr, (bool *)&gGui.showSettings);
-      ImGui::EndMenu();
-    }
-    ImGui::EndMenuBar();
-  }
+static void gui_subMenuSettings() {
+  ImGui::SeparatorText("General settings");
+
+  ImGui::Text("Mouse sensitivity");
+  ImGui::DragFloat(
+    "##settingsDrag1",
+    &gOptions.general.mouseSensitivity,
+    0.01f,
+    0.0f,
+    10.0f);
+  ImGui::Text("Vertical sensitivity scale");
+  ImGui::DragFloat(
+    "##settingsDrag2",
+    &gOptions.general.verticalSenseScale,
+    0.01f,
+    0.0f,
+    2.0f);
+
+  ImGui::SeparatorText("Freecam settings");
+  
+  ImGui::Text("Full-takeover by default");
+  gui_displayTips(
+    "The plugin will automatically obtain mouse increments and calculate"
+    "rotations, instead of using the game's original calculations.",
+    1);
+  ImGui::Checkbox(
+    "##settingsCheckbox3",
+    (bool *)&gOptions.freecam.fullTakeover);
+
+  ImGui::Text("Swap yaw and roll");
+  ImGui::Checkbox(
+    "##settingsCheckbox4",
+    (bool *)&gOptions.freecam.swapRollYaw);
 }
 
 void gui_windowMain() {
@@ -184,16 +142,8 @@ void gui_windowMain() {
   (void)io;
 
   // Title.
-  if (!ImGui::Begin(
-    "hSC Main",
-    (bool *)&gGui.isOpen,
-    ImGuiWindowFlags_MenuBar
-  )) {
-    ImGui::End();
-    return;
-  }
-
-  gui_navMain();
+  if (!ImGui::Begin("hSC Main", (bool *)&gGui.isOpen))
+    return (void)ImGui::End();
 
   // General options.
   if (ImGui::Checkbox("Take over", (bool *)&gState.enable))
@@ -207,28 +157,28 @@ void gui_windowMain() {
   
   if (ImGui::BeginTabBar("Mode select")) {
     if (ImGui::BeginTabItem("Static")) {
-      ImGui::Text("Static mode.");
+      gState.majorMode = MM_STATIC;
       gui_subMenuStatic();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Dynamic")) {
-      ImGui::Text("Dynamic mode.");
+      gState.majorMode = MM_DYNAMIC;
       gui_subMenuDynamic();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Animation")) {
-      ImGui::Text("Animation mode.");
+      gState.majorMode = MM_ANIMATION;
       gui_subMenuAnim();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Settings")) {
       ImGui::Text("Settings.");
-      gui_subMenuSet();
+      gui_subMenuSettings();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Abouts")) {
       ImGui::SeparatorText("Abouts.");
-      ImGui::Text("hSC Plugin v0.1.2 by HTMonkeyG");
+      ImGui::Text("hSC Plugin v" HSC_VERSION " by HTMonkeyG");
       ImGui::Text("A camera plugin developed for Sky:CotL.");
       ImGui::Text("<https://www.github.com/HTMonkeyG/hSC>");
       ImGui::EndTabItem();
@@ -236,6 +186,7 @@ void gui_windowMain() {
     ImGui::EndTabBar();
   }
 
+  /*
   ImGui::RadioButton("Set", &gState.majorMode, 0);
   ImGui::SameLine();
   ImGui::RadioButton("Freecam", &gState.majorMode, 1);
@@ -247,7 +198,7 @@ void gui_windowMain() {
   if (gState.majorMode == 1)
     ;//gui_subMenuFreecam();
   if (gState.majorMode == 2)
-    gui_subMenuFPV();
+    gui_subMenuFPV();*/
 
   // Overlay window FPS display.
   ImGui::Text("Overlay %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);

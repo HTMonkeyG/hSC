@@ -29,37 +29,47 @@ extern "C" {
 
 typedef struct {
   // General controller.
+  // Deciding whether to take over the camera.
   i08 enable;
+  // Deciding whether to display the camera UI.
   i08 noOriginalUi;
+  // Deciding on how to take over camera operations.
   i32 majorMode;
+  // Deciding which camera mode to take over.
   i32 cameraMode;
+  // Deciding whether to reset camera coordinates for the next frame.
   i08 resetPosFlag;
 
   // Inputs.
   v4f movementInput;
   v4f facingInput;
 
-  // Original data sync.
+  // Camera parameters.
+  // Position.
   v4f pos;
+  // Rotation in radians, for internal calculations.
   v4f rot;
+  // Rotation in degrees, only for user operation.
+  v4f rotDeg;
+  // Adjustable parameters during normal gaming, not avaliable on OM_WHISKER.
   f32 scale;
   f32 focus;
   f32 brightness;
 
-  // Set param mode.
+  // Camera static parameters override.
   i08 overridePos;
   i08 overrideDir;
   i08 overrideFocus;
   i08 overrideScale;
   i08 overrideBrightness;
 
-  // Freecam mode.
+  // Freecam datas.
   i32 freecamMode;
   f32 freecamSpeed;
   f32 freecamRotateSpeed;
   i08 freecamCollision;
 
-  // FPV mode.
+  // FPV datas.
   i32 fpvMode;
 
   // Pre-calculated rotation matrix and pos.
@@ -94,6 +104,13 @@ extern GUI_t gGui;
 extern GUIState_t gState;
 extern GUIOptions_t gOptions;
 
+static inline void setRotDegree(v4f rotRadians) {
+  gState.rotDeg = v4fscale(rotRadians, 180.0f / PI_F);
+  gState.rotDeg.x = fmodf(gState.rotDeg.x, 360.0f);
+  gState.rotDeg.z = fmodf(gState.rotDeg.z, 360.0f);
+  gState.rotDeg.y = m_clamp(gState.rotDeg.y, -89.75f, 89.75f);
+}
+
 i08 gui_init(HMODULE hModule);
 i08 gui_deinit();
 i08 gui_waitForInit();
@@ -114,8 +131,6 @@ v4f gui_getFacingDeltaRad();
 
 void gui_displayTips(const char *desc, i08 sameLine);
 void gui_windowMain();
-
-void gui_windowSettings();
 
 void gui_windowConsole();
 
