@@ -1,4 +1,4 @@
-MAKEFLAGS += -s -j6
+MAKEFLAGS += -s -j
 
 DIST_DIR = ./dist
 SRC_DIR = ./src
@@ -21,13 +21,13 @@ CC = gcc
 CXX = g++
 
 # Params.
-CFLAGS = -Wall -Wformat -O3 -ffunction-sections -fdata-sections -static -flto -s -mavx -msse
+CFLAGS = -Wall -Wformat -O3 -ffunction-sections -fdata-sections -static -flto=auto -s -mavx -msse
 CFLAGS += -I./src
 # Include ImGui.
 CFLAGS += -I./libraries/htmodloader/includes/imgui-1.91.9b -I./libraries/htmodloader/includes/imgui-1.91.9b/backends
-# Include MinHook.
+# Include HTML.
 CFLAGS += -I./libraries/htmodloader/includes/htmodloader
-# Include UGLHook.
+# Include MinHook.
 CFLAGS += -I./libraries/MinHook/include
 # Macros.
 CFLAGS += -DNDEBUG -DUSE_HTML
@@ -36,8 +36,6 @@ LFLAGS = -Wl,--gc-sections,-O3,--as-needed,--version-script=$(VERSION_SCRIPT)
 LFLAGS += -lgdi32 -ldwmapi -ld3dcompiler -lstdc++
 LFLAGS += -L./libraries/htmodloader/lib -lhtmodloader
 LFLAGS += -L./libraries/MinHook -lMinHook
-#LFLAGS += -L./libraries/imgui-1.91.9b -limgui -limgui_impl_win32 -limgui_impl_dx12
-#LFLAGS += -L./libraries/UGLHook -luglhook
 
 vpath %.c $(SRC_DIRS)
 vpath %.cpp $(SRC_DIRS)
@@ -68,11 +66,7 @@ all: libs
 
 libs:
 	@echo Compiling libraries ...
-	-@$(MAKE) -s -C ./libraries/imgui-1.91.9b all
 	-@$(MAKE) -s -C ./libraries/MinHook libMinHook.a
-	-@$(MAKE) -s -C ./libraries/UGLHook
 
 clean_libs:
-	-@$(MAKE) -s -C ./libraries/imgui-1.91.9b clean
-	-@$(MAKE) -s -C ./libraries/UGLHook clean
 	-@$(MAKE) -s -C ./libraries/MinHook clean
