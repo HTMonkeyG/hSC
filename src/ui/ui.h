@@ -9,11 +9,6 @@
 #define MM_DYNAMIC (0x01)
 #define MM_ANIMATION (0x02)
 
-#define OM_SET (0x00)
-#define OM_FREE (0x01)
-#define OM_FPV (0x02)
-#define OM_WHISKER (0x03)
-
 #define FC_ORIENT (0x00)
 #define FC_AXIAL (0x01)
 #define FC_FULLDIR (0x02)
@@ -68,6 +63,8 @@ typedef struct {
   f32 freecamSpeed;
   f32 freecamRotateSpeed;
   i08 freecamCollision;
+  i08 freecamLockPosition;
+  i08 freecamLockRotation;
 
   // FPV datas.
   i32 fpvMode;
@@ -103,6 +100,7 @@ typedef struct {
 extern GUI_t gGui;
 extern GUIState_t gState;
 extern GUIOptions_t gOptions;
+extern v4f gMouseDeltaPx;
 
 static inline void setRotDegree(v4f rotRadians) {
   gState.rotDeg = v4fscale(rotRadians, 180.0f / PI_F);
@@ -117,22 +115,20 @@ i08 gui_waitForInit();
 i08 gui_waitForDll(DWORD *lastError);
 i08 gui_update();
 
-extern v4f gMouseDeltaPx;
+void gui_displayTips(const char *desc, i08 sameLine);
+void gui_windowMain();
+void gui_windowConsole();
 
 /**
  * Handle keyboard and mouse inputs.
  */
 void gui_handleInput();
-
 /**
  * Convert mouse movement to radians.
  */
 v4f gui_getFacingDeltaRad();
 
-void gui_displayTips(const char *desc, i08 sameLine);
-void gui_windowMain();
-
-void gui_windowConsole();
+void gui_initInputs();
 
 #ifdef __cplusplus
 }

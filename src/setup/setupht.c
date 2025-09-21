@@ -10,23 +10,48 @@ static void toggleMenu(const HTKeyEvent *event) {
     gGui.isOpen = !gGui.isOpen;
 }
 
-HTStatus HTMLAPI HTModOnInit(
+// HTML v1.0.1 uses key name to sort key bindings, so we add a number to
+// make the key binding list a little bit more tidy.
+static const char *KEY_NAMES[] = {
+  "0 Show menu",
+  "1 Foward",
+  "2 Back",
+  "3 Left",
+  "4 Right",
+  "5 Up",
+  "6 Down"
+};
+static const HTKeyCode DEFAULT_KEYS[] = {
+  HTKey_F1,
+  HTKey_W,
+  HTKey_S,
+  HTKey_A,
+  HTKey_D,
+  HTKey_Space,
+  HTKey_LeftShift
+};
+
+__declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
   void *reserved
 ) {
-  HTHandle hKey = HTHotkeyRegister(
-    hModuleDll,
-    "Show menu",
-    HTKey_F1);
+  for (i32 i = 0; i < sizeof(KEY_NAMES) / sizeof(KEY_NAMES[0]); i++) {
+    gBindedKeys.keys[i] = HTHotkeyRegister(
+      hModuleDll,
+      KEY_NAMES[i],
+      DEFAULT_KEYS[i]);
+  }
   HTHotkeyListen(
-    hKey,
+    gBindedKeys.menu,
     toggleMenu);
+
+  // Create all hooks.
   initAllHooks();
   createAllHooks();
 
   return HT_SUCCESS;
 }
 
-void HTMLAPI HTModRenderGui(
+__declspec(dllexport) void HTMLAPI HTModRenderGui(
   f32 timeElapesed,
   void *reserved
 ) {

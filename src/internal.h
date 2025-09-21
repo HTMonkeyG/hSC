@@ -2,6 +2,7 @@
 #define __INTERNAL_H__
 
 #include <windows.h>
+#include "includes/htmodloader.h"
 
 #include "aliases.h"
 #include "mth/macros.h"
@@ -20,7 +21,24 @@ extern "C" {
 // [SECTION] Globals.
 //-----------------------------------------------------------------------------
 
+typedef union {
+  struct {
+    HTHandle menu;
+    HTHandle foward;
+    HTHandle backward;
+    HTHandle left;
+    HTHandle right;
+    HTHandle up;
+    HTHandle down;
+  };
+  HTHandle keys[7];
+} KeyBindings_t;
+
+extern LPVOID gameBaseAddr;
 extern HMODULE hModuleDll;
+extern KeyBindings_t gBindedKeys;
+extern char gIniPath[260];
+extern wchar_t gPrefPath[260];
 
 //-----------------------------------------------------------------------------
 // [SECTION] Type definitions.
@@ -140,7 +158,7 @@ typedef struct {
 // [SECTION] Signature scanner of hSC.
 //-----------------------------------------------------------------------------
 
-#ifndef HTML_VERSION
+#ifndef USE_HTML
 // Method for obtaining the final address.
 typedef enum {
   // The Signature represents the function body.

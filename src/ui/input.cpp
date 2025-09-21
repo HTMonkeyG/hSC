@@ -10,23 +10,23 @@ static void gui_inputFreecam() {
     , s = v4fnew(0.0f, 0.0f, 0.0f, 0.0f);
 
   // Movement.
-  if (ImGui::IsKeyDown(ImGuiKey_W))
+  if (HTHotkeyPressed(gBindedKeys.foward))
     r.z += 1.0f;
-  if (ImGui::IsKeyDown(ImGuiKey_A))
+  if (HTHotkeyPressed(gBindedKeys.backward))
+    r.z -= 1.0f;
+  if (HTHotkeyPressed(gBindedKeys.left))
     gState.freecamMode != FC_FULLDIR
       ? r.x += 1.0f
       : s.z += 1.0f;
-  if (ImGui::IsKeyDown(ImGuiKey_S))
-    r.z -= 1.0f;
-  if (ImGui::IsKeyDown(ImGuiKey_D))
+  if (HTHotkeyPressed(gBindedKeys.right))
     gState.freecamMode != FC_FULLDIR
       ? r.x -= 1.0f
       : s.z -= 1.0f;
 
   // Up and down.
-  if (ImGui::IsKeyDown(ImGuiKey_Space))
+  if (HTHotkeyPressed(gBindedKeys.up))
     r.y += 1.0f;
-  if (ImGui::IsKeyDown(ImGuiKey_LeftShift))
+  if (HTHotkeyPressed(gBindedKeys.down))
     r.y -= 1.0f;
 
   gState.movementInput = r;
@@ -58,9 +58,9 @@ static void gui_inputFPV() {
 }
 
 void gui_handleInput() {
-  if (gState.majorMode == OM_FREE)
+  if (gState.majorMode == MM_STATIC)
     gui_inputFreecam();
-  if (gState.majorMode == OM_FPV)
+  if (gState.majorMode == MM_DYNAMIC)
     gui_inputFPV();
 }
 

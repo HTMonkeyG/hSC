@@ -2,7 +2,7 @@
 #include "MinHook.h"
 
 #include "internal.h"
-#include "log.h"
+#include "utils/log.h"
 #include "ui/ui.h"
 
 // Defines.

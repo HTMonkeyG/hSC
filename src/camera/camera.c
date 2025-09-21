@@ -27,11 +27,11 @@ void preupdateCameraMain(MainCamera *this) {
 
   gState.useMatrix = gState.usePos = 0;
 
-  if (gState.majorMode == OM_SET)
+  if (gState.majorMode == MM_STATIC)
     preupdateStatic(this);
-  else if (gState.majorMode == OM_FREE)
+  else if (gState.majorMode == MM_DYNAMIC)
     preupdateDynamic(this);
-  else if (gState.majorMode == OM_FPV)
+  else if (gState.majorMode == MM_ANIMATION)
     preupdateAnim(this);
 }
 

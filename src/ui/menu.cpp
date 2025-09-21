@@ -79,6 +79,8 @@ static void gui_subMenuStatic() {
   if (ImGui::Button("Reset pos"))
     gState.resetPosFlag = 1;
 
+  ImGui::Checkbox("Lock position", (bool *)&gState.freecamLockPosition);
+  ImGui::Checkbox("Lock rotation", (bool *)&gState.freecamLockRotation);
   ImGui::Checkbox("Check collision", (bool *)&gState.freecamCollision);
   ImGui::DragFloat("Rotate speed", &gState.freecamRotateSpeed, .01f, 0, 10.0f);
   ImGui::DragFloat("Movement speed", &gState.freecamSpeed, .01f, 0, 100.0f);
@@ -144,6 +146,9 @@ void gui_windowMain() {
   // Title.
   if (!ImGui::Begin("hSC Main", (bool *)&gGui.isOpen))
     return (void)ImGui::End();
+  
+  // Overlay window FPS display.
+  ImGui::Text("Overlay %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
   // General options.
   if (ImGui::Checkbox("Take over", (bool *)&gState.enable))
@@ -185,23 +190,6 @@ void gui_windowMain() {
     }
     ImGui::EndTabBar();
   }
-
-  /*
-  ImGui::RadioButton("Set", &gState.majorMode, 0);
-  ImGui::SameLine();
-  ImGui::RadioButton("Freecam", &gState.majorMode, 1);
-  ImGui::SameLine();
-  ImGui::RadioButton("FPV", &gState.majorMode, 2);
-
-  if (gState.majorMode == 0)
-    gui_subMenuSet();
-  if (gState.majorMode == 1)
-    ;//gui_subMenuFreecam();
-  if (gState.majorMode == 2)
-    gui_subMenuFPV();*/
-
-  // Overlay window FPS display.
-  ImGui::Text("Overlay %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
   ImGui::End();
 }

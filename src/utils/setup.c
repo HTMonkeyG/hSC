@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #include "internal.h"
-#include "log.h"
+#include "utils/log.h"
 #include "sigcodes.h"
 
 i08 setupFuncWithSig(SetupFunctions_t *functions) {

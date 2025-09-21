@@ -1,7 +1,7 @@
 #include <windows.h>
 #include <stdarg.h>
 
-#include "log.h"
+#include "utils/log.h"
 #include "internal.h"
 
 void recreateConsole() {
