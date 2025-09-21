@@ -14,3 +14,5 @@ test*
 dist/
 pack/
 .VSCodeCounter/
+libraries/UGLHook
+libraries/imgui-1.91.9b

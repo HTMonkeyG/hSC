@@ -1,9 +1,0 @@
-# Built binaries.
-dist/
-*.a
-*.o
-*.exe
-*.dll
-
-# VSCode settings.
-.vscode/
