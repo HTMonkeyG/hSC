@@ -192,7 +192,6 @@ typedef struct {
 
 void *sigScan(const char *moduleName, const char *sig, i32 offset);
 void *sigScanE8(const char *moduleName, const char *sig, i32 offset);
-i08 sigCheckProcess(void *addr, char *sig);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Plugin setup functions.
