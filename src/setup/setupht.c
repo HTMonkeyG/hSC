@@ -19,7 +19,9 @@ static const char *KEY_NAMES[] = {
   "3 Left",
   "4 Right",
   "5 Up",
-  "6 Down"
+  "6 Down",
+  "7 Roll left",
+  "8, Roll right"
 };
 static const HTKeyCode DEFAULT_KEYS[] = {
   HTKey_F1,
@@ -28,7 +30,9 @@ static const HTKeyCode DEFAULT_KEYS[] = {
   HTKey_A,
   HTKey_D,
   HTKey_Space,
-  HTKey_LeftShift
+  HTKey_LeftShift,
+  HTKey_Q,
+  HTKey_E
 };
 
 __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(

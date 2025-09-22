@@ -4,6 +4,8 @@
 #define OVERRIDE_2(cond, v1, v2) ((cond) ? ((v1) = (v2)) : ((v2) = (v1)))
 #define OVERRIDE_3(cond, v11, v12, v2) ((cond) ? ((v11) = ((v12) = (v2))) : ((v2) = (v11)))
 
+static const v4f AABB_SIZE = {0.1f, 0.1f, 0.1f, 0.1f};
+
 /**
  * Encapsulation for invocations of World::interactionCheck().
  * 
@@ -84,155 +86,89 @@ static i08 freecamCheckCollision(
   return result;
 }
 
-void preupdateSet(MainCamera *this) {
-  
-}
-
-void preupdateFreecam(MainCamera *this) {
+void preupdateStatic(MainCamera *this) {
+  // This function does:
+  // overrideDir
+  //   -> Calculate local matrix from rotation inputs.
+  //   -> Apply delta rotation from mouse inputs to local matrix.
+  //   -> Calculate rotation from local matrix and copy to gui.
+  //   -> Copy local matrix to the game.
+  // !overrideDir
+  //   -> Calc rotation from the game.
+  // overridePos
+  //   -> Calculate delta position from local matrix (foward vector).
+  //   -> Apply delta position from keyboard inputs to local position.
+  //   -> Copy local position to the game.
+  // !overridePos
+  //   -> Copy local position from the game.
+  //
   v4f deltaRot = {0}
-    , size = {0.1f, 0.1f, 0.1f, 0.1f}
-    // Original direction vector (foward vector).
-    , oDir = {0}
-    , *dir
-    , lastPos, delta, mouseDelta;
-  f32 t;
-  m44 mat = {0};
+    , mouseDelta, delta;
+  m44 matDelta = {0};
   AABB_t aabb;
 
-  dir = &this->context1.mat3;
-
-  if (gState.resetPosFlag) {
-    gState.pos = gState.mat[3] = this->context1.cameraPos;
-    /*gState.rot = v4fnew(
-      this->rotateXAnim,
-      this->rotateYAnim,
-      0,
-      0);*/
-    gState.resetPosFlag = 0;
-    eulerToRotationXYZ(gState.rot, gState.mat);
-    return;
-  }
-
-  mouseDelta = gui_getFacingDeltaRad();
-
-  // Calculte the direction vector parallel to xOz plane.
-  lastPos = gState.pos;
-
-  // FIXME: When directly looks up, the horizontal direction vector will be a
-  // zero vector, so the camera won't move.
-  oDir.x = dir->x;
-  oDir.y = dir->z;
-  oDir = v4fnormalize(oDir);
-
-  if (gState.freecamMode == FC_ORIENT) {
-    // Combine forward vector and left vector.
-    delta = v4fnew(
-      -gState.movementInput.x * +oDir.y,
-      gState.movementInput.y,
-      -gState.movementInput.x * -oDir.x,
-      0.0f);
-    delta = v4fadd(delta, v4fscale(*dir, -gState.movementInput.z));
-
-    // Do not override the rotation matrix.
-    gState.useMatrix = 0;
-    gState.rot.z = 0;
-  } else if (gState.freecamMode == FC_AXIAL) {
-    // Rotate it by the movement input. Axial mode will ignore the roll angle.
-    delta.x = oDir.x * -gState.movementInput.z + oDir.y * -gState.movementInput.x;
-    delta.y = gState.movementInput.y;
-    delta.z = oDir.y * -gState.movementInput.z - oDir.x * -gState.movementInput.x;
-
-    // Do not override the rotation matrix.
-    gState.useMatrix = 0;
-    gState.rot.z = 0;
-  } else if (gState.freecamMode == FC_FULLDIR) {
-    // Calculate rotation delta from hooked data.
-    deltaRot.z = gState.facingInput.z * gState.freecamRotateSpeed * gGui.timeElapsedSecond;
-    deltaRot.x = -mouseDelta.x;
-    deltaRot.y = mouseDelta.y;
-
-    if (gOptions.freecam.swapRollYaw) {
-      t = deltaRot.z;
-      deltaRot.z = deltaRot.x;
-      deltaRot.x = t;
-    }
-
-    // Calculate rotation matrix based on last frame.
-    eulerToRotationXYZ(deltaRot, (v4f *)&mat);
-    mat.row4 = v4fnew(0, 0, 0, 1);
-    m44mul((m44 *)gState.mat, &mat, (m44 *)gState.mat);
-
-    // Combine forward vector and left vector. The full-direction mode will use
-    // the foward vector we calculated, instead of the game.
-    delta = v4fscale(gState.mat[2], -gState.movementInput.z);
-    delta = v4fnormalize(delta);
-
-    // Override the rotation matrix to enable roll angle.
-    gState.useMatrix = 1;
-  }
-  delta = v4fscale(delta, gState.freecamSpeed * gGui.timeElapsedSecond);
-
-  if (gState.freecamCollision) {
-    // Build AABB and check collision.
-    aabb_fromCenter(&aabb, gState.pos, size);
-    freecamCheckCollision(&aabb, &delta);
-  }
-
-  // Multiply by speed. Note that this function only affects the rotation matrix.
-  gState.pos = v4fadd(
-    lastPos,
-    delta);
-  gState.mat[3] = gState.pos;
-
-  // Always override the position.
-  gState.usePos = 1;
-}
-
-void preupdateStatic(MainCamera *this) {
-  v4f *pos, *dir, *gsRot;
-
-  dir = &this->context1.mat3;
-  // Pointer to original camera pos caculated by the game.
-  pos = &this->context1.cameraPos;
-  gsRot = &gState.rot;
-
-  // Override coodinates or copy original camera pos to overlay.
-  OVERRIDE_2(gState.overridePos, *pos, gState.pos);
-  gState.mat[3] = *pos;
-
   if (gState.overrideDir) {
+    mouseDelta = gui_getFacingDeltaRad();
+
     // Convert facing directions to radians.
     gState.rot = v4fscale(gState.rotDeg, PI_F / 180.0f);
     // Copy the rotation matrix to gState. We must provide the matrix to the
     // gui.
     eulerToRotationXYZ(gState.rot, gState.mat);
+
+    // Calculate rotation delta from hooked data.
+    deltaRot.z = gState.facingInput.z * gState.freecamRotateSpeed * gGui.timeElapsedSecond;
+    deltaRot.x = -mouseDelta.x;
+    deltaRot.y = mouseDelta.y;
+    // Swap yaw and roll inputs.
+    if (gOptions.freecam.swapRollYaw) {
+      f32 t = deltaRot.z;
+      deltaRot.z = deltaRot.x;
+      deltaRot.x = t;
+    }
+
+    // Calculate rotation matrix based on last frame.
+    eulerToRotationXYZ(deltaRot, (v4f *)&matDelta);
+    matDelta.row4 = v4fnew(0, 0, 0, 1);
+    // Apply rotation delta to local matrix.
+    m44mul((m44 *)gState.mat, &matDelta, (m44 *)gState.mat);
+
+    // Calculate rotation from local matrix and show on gui.
+    (void)rotationToEulerXYZ(&gState.rot, (v4f *)gState.mat);
+    gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
   } else {
     // Sync original facing directions to overlay. We assume that the rotation
     // matrix is in the order of yaw-pitch-roll, so we can apply the following
     // codes.
-
-    // Get the pitch angle. When the camera looks "up", or, the foward vector
-    // "raises", the pitch angle actually decreases, so there's a negative sign
-    // here.
-    gsRot->y = -asinf(dir->y);
-
-    // Get the yaw angle.
-    if (dir->x == 0 && dir->z == 0)
-      // Avoid dividing by 0, although this case won't happen in normal games.
-      gsRot->x = 0;
-    else
-      // There will be some floating point errors here, but we don't care about
-      // it.
-      gsRot->x = atan2f(dir->x, dir->z);
-
-    // Get the roll angle. This value is always 0 in SkyCamera calls.
-    if (this->context1.mat1.y == 0 && this->context1.mat2.y == 0)
-      gsRot->z = 0;
-    else
-      gsRot->z = atan2f(this->context1.mat1.y, this->context1.mat2.y);
-
+    (void)rotationToEulerXYZ(&gState.rot, (v4f *)&this->context1.mat);
     gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
+    // Copy game rotation matrix to local matrix.
+    memcpy((void *)gState.mat, (void *)&this->context1.mat, sizeof(m44));
   }
+
+  if (gState.overridePos) {
+    // Combine forward vector and left vector. The full-direction mode will use
+    // the foward vector we calculated, instead of the game.
+    delta = v4fscale(gState.mat[2], -gState.movementInput.z);
+    delta = v4fnormalize(delta);
+
+    // Multiply by speed.
+    delta = v4fscale(delta, gState.freecamSpeed * gGui.timeElapsedSecond);
+
+    if (gState.freecamCollision) {
+      // Build AABB and check collision.
+      aabb_fromCenter(&aabb, gState.pos, AABB_SIZE);
+      freecamCheckCollision(&aabb, &delta);
+    }
+
+    gState.pos = v4fadd(gState.pos, delta);
+  } else {
+    gState.pos = this->context1.cameraPos;
+  }
+
+  // Copy position vector to local matrix, the vector is copied to the game in
+  // updateCameraMain().
+  gState.mat[3] = gState.pos;
 
   gState.usePos = gState.overridePos;
   gState.useMatrix = gState.overrideDir;

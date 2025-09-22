@@ -30,8 +30,10 @@ typedef union {
     HTHandle right;
     HTHandle up;
     HTHandle down;
+    HTHandle rollLeft;
+    HTHandle rollRight;
   };
-  HTHandle keys[7];
+  HTHandle keys[9];
 } KeyBindings_t;
 
 extern LPVOID gameBaseAddr;
@@ -104,14 +106,19 @@ typedef struct {
   // The field-of-view in the unit of 'rad'.
   f32 fov;
   u64 unk_2;
-  // Rotate matrix (3x3) is stored separately by rows in three vectors. The
-  // last component of these vectors is 0.
-  v4f mat1;
-  v4f mat2;
-  v4f mat3;
-  // The last element of this vector is 1. We can consider the four vectors
-  // as a single matrix (4x4).
-  v4f cameraPos;
+  union {
+    struct {
+      // Rotate matrix (3x3) is stored separately by rows in three vectors. The
+      // last component of these vectors is 0.
+      v4f mat1;
+      v4f mat2;
+      v4f mat3;
+      // The last element of this vector is 1. We can consider the four vectors
+      // as a single matrix (4x4).
+      v4f cameraPos;
+    };
+    m44 mat;
+  };
   char unk_4[32];
 } MainCameraContext;
 

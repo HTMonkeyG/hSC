@@ -151,7 +151,7 @@ void gui_windowMain() {
   ImGui::Text("Overlay %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
   // General options.
-  if (ImGui::Checkbox("Take over", (bool *)&gState.enable))
+  if (ImGui::Checkbox("Enable plugin", (bool *)&gState.enable))
     gState.resetPosFlag = 1;
   ImGui::Combo("Use mode", &gState.cameraMode, MODES, IM_ARRAYSIZE(MODES));
   ImGui::Checkbox("No UI", (bool *)&gState.noOriginalUi);
@@ -177,15 +177,18 @@ void gui_windowMain() {
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Settings")) {
-      ImGui::Text("Settings.");
       gui_subMenuSettings();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Abouts")) {
-      ImGui::SeparatorText("Abouts.");
       ImGui::Text("hSC Plugin v" HSC_VERSION " by HTMonkeyG");
       ImGui::Text("A camera plugin developed for Sky:CotL.");
-      ImGui::Text("<https://www.github.com/HTMonkeyG/hSC>");
+#ifdef HTML_VERSION_NAME
+      ImGui::Text("Based on HTModLoader v" HTML_VERSION_NAME ".");
+#endif
+      ImGui::TextLinkOpenURL(
+        "<https://www.github.com/HTMonkeyG/hSC>"
+        "https://www.github.com/HTMonkeyG/hSC");
       ImGui::EndTabItem();
     }
     ImGui::EndTabBar();

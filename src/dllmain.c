@@ -29,6 +29,7 @@ BOOL APIENTRY DllMain(
       return TRUE;
 
     hModuleDll = hModule;
+    QueryPerformanceFrequency((LARGE_INTEGER *)&gGui.performFreq);
     MH_Initialize();
   } else if (dwReason == DLL_PROCESS_DETACH) {
     LOGI("hSC detached.\n");

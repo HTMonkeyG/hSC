@@ -64,21 +64,22 @@ static inline v4f *rotationToEulerXYZ(v4f *euler, v4f *matrix) {
   // Get the pitch angle. When the camera looks "up", or, the foward vector
   // "raises", the pitch angle actually decreases, so there's a negative sign
   // here.
-  result.y = -asinf(dir.y) / PI_F * 180.0f;
+  result.y = -asinf(dir.y);
 
   // Get the yaw angle.
   if (dir.x == 0 && dir.z == 0)
     // Avoid dividing by 0, although this case won't happen in normal games.
     result.x = 0;
   else
-    // There will be some floating point errors here, but it's fine.
-    result.x = atan2f(dir.x, dir.z) / PI_F * 180.0f;
+    // There will be some floating point errors here, but we don't care about
+    // it.
+    result.x = atan2f(dir.x, dir.z);
 
   // Get the roll angle. This value is always 0 in SkyCamera calls.
   if (matrix[0].y == 0 && matrix[1].y == 0)
     result.z = 0;
   else
-    result.z = atan2f(matrix[0].y, matrix[1].y) / PI_F * 180.0f;
+    result.z = atan2f(matrix[0].y, matrix[1].y);
 
   *euler = result;
   return euler;
