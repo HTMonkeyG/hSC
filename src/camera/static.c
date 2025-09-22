@@ -1,9 +1,6 @@
 #include "ui/ui.h"
 #include "internal.h"
 
-#define OVERRIDE_2(cond, v1, v2) ((cond) ? ((v1) = (v2)) : ((v2) = (v1)))
-#define OVERRIDE_3(cond, v11, v12, v2) ((cond) ? ((v11) = ((v12) = (v2))) : ((v2) = (v11)))
-
 static const v4f AABB_SIZE = {0.1f, 0.1f, 0.1f, 0.1f};
 
 /**
