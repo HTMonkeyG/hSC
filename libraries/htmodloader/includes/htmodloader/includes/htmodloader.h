@@ -16,8 +16,8 @@
 // Mod loader version.
 // Version number is used for pre-processing statements handling version
 // compatibility.
-#define HTML_VERSION 10001
-#define HTML_VERSION_NAME "1.0.1"
+#define HTML_VERSION 10100
+#define HTML_VERSION_NAME "1.1.0"
 
 #define HTMLAPI __stdcall
 #ifndef HTMLAPIATTR
@@ -68,11 +68,14 @@ typedef struct {
 typedef void *(HTMLAPI *PFN_HTVoidFunction)(
   void);
 
+// Handle.
+typedef void *HTHandle;
+
 /* Mod exported function prototypes. */
 
 // Gui renderer.
 typedef void (HTMLAPI *PFN_HTModRenderGui)(
-  f32 timeElapsed, void *reserved);
+  float timeElapsed, void *reserved);
 // Initialize event
 typedef HTStatus (HTMLAPI *PFN_HTModOnInit)(
   void *reserved);
@@ -105,6 +108,22 @@ HTMLAPIATTR void HTMLAPI HTGetModFolder(
  */
 HTMLAPIATTR HMODULE HTMLAPI HTGetModuleHandle(
   const char *module);
+
+typedef enum {
+  HTModInfoFields_ModName = 1,
+  HTModInfoFields_PackageName,
+  HTModInfoFields_Folder
+} HTModInfoFields_;
+typedef i32 HTModInfoFields;
+
+/**
+ * Expand mod info from manifest.
+ */
+HTMLAPIATTR u32 HTMLAPI HTGetModInfoFrom(
+  HTHandle hManifest,
+  HTModInfoFields info,
+  void *out,
+  u32 maxLen);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML signature scan APIs.
@@ -253,9 +272,6 @@ HTMLAPIATTR HTStatus HTMLAPI HTMemFree(
 typedef void (HTMLAPI *PFN_HTEventCallback)(
   const void *data);
 
-// Handle.
-typedef void *HTHandle;
-
 #define HT_INVALID_HANDLE NULL
 
 /**
@@ -399,8 +415,6 @@ typedef enum {
   // ImGuiKey_MouseWheelX or ImGuiKey_MouseWheelY, which uses analog inputs to
   // indicate the direction, the key codes below act as a single physical key
   // like those on keyboard.
-  // HTML consider the mouse wheel as a single button representing player
-  // actions, rather than analog input.
   HTKey_MouseWheelUp,
   HTKey_MouseWheelDown,
   // Most users won't have horizontal mouse wheels. Why did I add these?
@@ -422,6 +436,8 @@ typedef enum {
   HTKeyMod_Super = 1 << 15,
 } HTKeyCode;
 
+// Key event properties.
+typedef i32 HTKeyEventFlags;
 typedef enum {
   HTKeyEventFlags_None = 0,
   HTKeyEventFlags_Down,
@@ -439,9 +455,9 @@ typedef enum {
   HTKeyEventFlags_Blocked = 1 << 17,
   HTKeyEventFlags_Mask = 0xFFFF
 } HTKeyEventFlags_;
-typedef i32 HTKeyEventFlags;
 
 // Key binding flags.
+typedef i32 HTHotkeyFlags;
 typedef enum {
   // Default value. The KeyDown events will be blocked when any ImGui window is
   // focused, due to io.WantCaptureKeyboard and io.WantCaptureMouse flags. Set
@@ -453,26 +469,42 @@ typedef enum {
   // Reserved.
   HTHotkeyFlags_BlockKeyUp = 1 << 1
 } HTHotkeyFlags_;
-typedef i32 HTHotkeyFlags;
+
+// Determine how to intercept the key message.
+typedef i32 HTKeyEventPreventFlags;
+typedef enum {
+  // Pass the event as normal.
+  HTKeyEventPreventFlags_None = 0,
+  // Prevent the game from receiving the key message. Setting this flag in any
+  // of the callbacks will prevent events from being passed down.
+  HTKeyEventPreventFlags_Game = 1 << 0,
+  // Prevent the next event callback listening the key from receiving the key
+  // message. We do not ensure the order of the callbacks, so this flag may
+  // affect other mod's behaviour uncontrollable.
+  HTKeyEventPreventFlags_Next = 1 << 1,
+} HTKeyEventPreventFlags_;
 
 // Key event data.
 typedef struct {
-  // Handle of the key bind.
+  // [In] Handle of the key bind.
   HTHandle hKey;
-  // Key code of this event. For HTKeyEventFlags_Down and HTKeyEventFlags_Up,
+  // [In] Key code of this event. For HTKeyEventFlags_Down and HTKeyEventFlags_Up,
   // this field is the key pressed. For HTKeyEventFlags_ChangeBind and 
   // HTKeyEventFlags_ResetBind, is the previous binded key.
   HTKeyCode key;
-  // Is the event a key press event. This field has been deprecated, reserved
+  // [In] Is the event a key press event. This field has been deprecated, reserved
   // for compatibility.
   u08 down;
-  // Key event flags, marked the type of this event.
+  // [In] Key event flags, marked the type of this event.
   HTKeyEventFlags flags;
+
+  // [Out] Determine how to intercept the key message.
+  HTKeyEventPreventFlags preventFlags;
 } HTKeyEvent;
 
 // Hotkey callback.
 typedef void (HTMLAPI *PFN_HTHotkeyCallback)(
-  const HTKeyEvent *event);
+  HTKeyEvent *event);
 
 /**
  * Shortcut for passing HTHotkeyFlags_None to HTHotkeyRegisterEx()
