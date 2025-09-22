@@ -105,7 +105,7 @@ static const Signature_t sigE8_Input_getMouseDeltaPx = {
   .offset = 0x0A
 };
 
-static const Signature_t *funcSig[10] = {
+static const Signature_t *funcSig[9] = {
   &sigE8_SkyCameraProp__updateParams,
   &sigE8_SkyCameraProp_updateUI,
   NULL,

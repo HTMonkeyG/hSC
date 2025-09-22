@@ -131,51 +131,13 @@ void *sigScanE8(const char *moduleName, const char *sig, i32 offset) {
   if (opCode == 0xE8 || opCode == 0xE9) {
     // Calculate offset.
     result = initial + offset + 5;
-    rel = *(initial + offset + 1)
-      | (*(initial + offset + 2) << 8)
-      | (*(initial + offset + 3) << 16)
-      | (*(initial + offset + 4) << 24);
+    rel = (u32)*(initial + offset + 1)
+      | (((u32)*(initial + offset + 2)) << 8)
+      | (((u32)*(initial + offset + 3)) << 16)
+      | (((u32)*(initial + offset + 4)) << 24);
     result += rel;
   } else
     return NULL;
 
   return (void *)result;
-}
-
-/**
- * Check the specified signature on given address.
- */
-i08 sigCheckProcess(void *addr, char *sig) {
-  u64 patternLen, readLen;
-  i32 *pattern;
-  u08 *bytes;
-  HANDLE hProcess;
-  
-  hProcess = OpenProcess(
-    PROCESS_ALL_ACCESS,
-    FALSE,
-    GetCurrentProcessId());
-  pattern = sigToPattern(sig, &patternLen);
-  bytes = malloc(patternLen);
-
-  if (
-    ReadProcessMemory(hProcess, addr, bytes, patternLen, &readLen)
-    || readLen != patternLen
-  ) {
-    free(pattern);
-    free(bytes);
-    return 0;
-  }
-
-  for (u64 i = 0; i < patternLen; i++)
-    if (pattern[i] != 0xFFFF && bytes[i] != (pattern[i] & 0xFF)) {
-      free(pattern);
-      free(bytes);
-      return 0;
-    }
-
-  free(pattern);
-  free(bytes);
-
-  return 1;
 }
