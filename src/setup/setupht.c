@@ -5,13 +5,8 @@
 #include "internal.h"
 #include "setup/setupapi.h"
 
-static void toggleMenu(const HTKeyEvent *event) {
-  if (event->flags == HTKeyEventFlags_Down)
-    gGui.isOpen = !gGui.isOpen;
-}
-
-// HTML v1.0.1 uses key name to sort key bindings, so we add a number to
-// make the key binding list a little bit more tidy.
+// HTML uses key name to sort key bindings, so we add a number to make the key
+// binding list a little bit more tidy.
 static const char *KEY_NAMES[] = {
   "0 Show menu",
   "1 Foward",
@@ -21,7 +16,7 @@ static const char *KEY_NAMES[] = {
   "5 Up",
   "6 Down",
   "7 Roll left",
-  "8, Roll right"
+  "8 Roll right"
 };
 static const HTKeyCode DEFAULT_KEYS[] = {
   HTKey_F1,
@@ -35,6 +30,40 @@ static const HTKeyCode DEFAULT_KEYS[] = {
   HTKey_E
 };
 
+static void keyEventCallbackGeneral(HTKeyEvent *event) {
+  if (event->hKey == gBindedKeys.menu) {
+    if (event->flags == HTKeyEventFlags_Down)
+      // Toggle the menu status when the key is pressed.
+      gGui.isOpen = !gGui.isOpen;
+  } else if (
+    event->hKey == gBindedKeys.foward
+    || event->hKey == gBindedKeys.backward
+    || event->hKey == gBindedKeys.left
+    || event->hKey == gBindedKeys.right
+    || event->hKey == gBindedKeys.up
+    || event->hKey == gBindedKeys.down
+  ) {
+    if (
+      event->flags == HTKeyEventFlags_Down
+      && gState.enable
+      && !gState.freecamLockPosition
+    )
+      // Like elder hSC versions, we only block keyDown messages.
+      event->preventFlags |= HTKeyEventPreventFlags_Game;
+  } else if (
+    event->hKey == gBindedKeys.rollLeft
+    || event->hKey == gBindedKeys.rollRight
+  ) {
+    if (
+      event->flags == HTKeyEventFlags_Down
+      && gState.enable
+      && !gState.freecamLockRotation
+    )
+      // Like elder hSC versions, we only block keyDown messages.
+      event->preventFlags |= HTKeyEventPreventFlags_Game;
+  }
+}
+
 __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
   void *reserved
 ) {
@@ -43,10 +72,10 @@ __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
       hModuleDll,
       KEY_NAMES[i],
       DEFAULT_KEYS[i]);
+    HTHotkeyListen(
+      gBindedKeys.keys[i],
+      keyEventCallbackGeneral);
   }
-  HTHotkeyListen(
-    gBindedKeys.menu,
-    toggleMenu);
 
   // Create all hooks.
   initAllHooks();
@@ -68,6 +97,9 @@ __declspec(dllexport) void HTMLAPI HTModRenderGui(
     gui_handleInput();
 }
 
+/**
+ * Reserved for non-HTML initialization.
+ */
 i08 setupAll() {
   return 1;
 }

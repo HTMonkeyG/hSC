@@ -59,7 +59,6 @@ typedef struct {
   i08 overrideBrightness;
 
   // Freecam datas.
-  i32 freecamMode;
   f32 freecamSpeed;
   f32 freecamRotateSpeed;
   i08 freecamCollision;
@@ -109,15 +108,8 @@ static inline void setRotDegree(v4f rotRadians) {
   gState.rotDeg.y = m_clamp(gState.rotDeg.y, -89.75f, 89.75f);
 }
 
-i08 gui_init(HMODULE hModule);
-i08 gui_deinit();
-i08 gui_waitForInit();
-i08 gui_waitForDll(DWORD *lastError);
-i08 gui_update();
-
 void gui_displayTips(const char *desc, i08 sameLine);
 void gui_windowMain();
-void gui_windowConsole();
 
 /**
  * Handle keyboard and mouse inputs.

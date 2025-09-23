@@ -113,26 +113,30 @@ void preupdateStatic(MainCamera *this) {
     // gui.
     eulerToRotationXYZ(gState.rot, gState.mat);
 
-    // Calculate rotation delta from hooked data.
-    deltaRot.z = gState.facingInput.z * gState.freecamRotateSpeed * gGui.timeElapsedSecond;
-    deltaRot.x = -mouseDelta.x;
-    deltaRot.y = mouseDelta.y;
-    // Swap yaw and roll inputs.
-    if (gOptions.freecam.swapRollYaw) {
-      f32 t = deltaRot.z;
-      deltaRot.z = deltaRot.x;
-      deltaRot.x = t;
+    if (!gState.freecamLockRotation) {
+      // Calculate rotation delta from hooked data.
+      deltaRot.z = gState.facingInput.z
+        * gState.freecamRotateSpeed
+        * gGui.timeElapsedSecond;
+      deltaRot.x = -mouseDelta.x;
+      deltaRot.y = mouseDelta.y;
+      // Swap yaw and roll inputs.
+      if (gOptions.freecam.swapRollYaw) {
+        f32 t = deltaRot.z;
+        deltaRot.z = deltaRot.x;
+        deltaRot.x = t;
+      }
+
+      // Calculate rotation matrix based on last frame.
+      eulerToRotationXYZ(deltaRot, (v4f *)&matDelta);
+      matDelta.row4 = v4fnew(0, 0, 0, 1);
+      // Apply rotation delta to local matrix.
+      m44mul((m44 *)gState.mat, &matDelta, (m44 *)gState.mat);
+
+      // Calculate rotation from local matrix and show on gui.
+      (void)rotationToEulerXYZ(&gState.rot, (v4f *)gState.mat);
+      gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
     }
-
-    // Calculate rotation matrix based on last frame.
-    eulerToRotationXYZ(deltaRot, (v4f *)&matDelta);
-    matDelta.row4 = v4fnew(0, 0, 0, 1);
-    // Apply rotation delta to local matrix.
-    m44mul((m44 *)gState.mat, &matDelta, (m44 *)gState.mat);
-
-    // Calculate rotation from local matrix and show on gui.
-    (void)rotationToEulerXYZ(&gState.rot, (v4f *)gState.mat);
-    gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
   } else {
     // Sync original facing directions to overlay. We assume that the rotation
     // matrix is in the order of yaw-pitch-roll, so we can apply the following
@@ -143,23 +147,33 @@ void preupdateStatic(MainCamera *this) {
     memcpy((void *)gState.mat, (void *)&this->context1.mat, sizeof(m44));
   }
 
-  if (gState.overridePos) {
-    // Combine forward vector and left vector. The full-direction mode will use
-    // the foward vector we calculated, instead of the game.
-    delta = v4fscale(gState.mat[2], -gState.movementInput.z);
-    delta = v4fnormalize(delta);
+  if (gState.overridePos && !gState.resetPosFlag) {
+    if (!gState.freecamLockPosition) {
+      // Calculate the movement direction vector.
+      // Foward (gState.mat[1] towards backward, so we need to invert it).
+      delta = v4fscale(gState.mat[2], -gState.movementInput.z);
+      // Left (gState.mat[0] towards right, so we need to invert it).
+      delta = v4fadd(delta, v4fscale(gState.mat[0], -gState.movementInput.x));
+      // Up.
+      delta = v4fadd(delta, v4fscale(gState.mat[1], gState.movementInput.y));
+      // Normalize the vector.
+      delta = v4fnormalize(delta);
 
-    // Multiply by speed.
-    delta = v4fscale(delta, gState.freecamSpeed * gGui.timeElapsedSecond);
+      // Multiply by speed.
+      delta = v4fscale(delta, gState.freecamSpeed * gGui.timeElapsedSecond);
 
-    if (gState.freecamCollision) {
-      // Build AABB and check collision.
-      aabb_fromCenter(&aabb, gState.pos, AABB_SIZE);
-      freecamCheckCollision(&aabb, &delta);
+      if (gState.freecamCollision) {
+        // Build AABB and check collision.
+        aabb_fromCenter(&aabb, gState.pos, AABB_SIZE);
+        freecamCheckCollision(&aabb, &delta);
+      }
+
+      gState.pos = v4fadd(gState.pos, delta);
     }
-
-    gState.pos = v4fadd(gState.pos, delta);
   } else {
+    if (gState.resetPosFlag)
+      gState.resetPosFlag = 0;
+    // Copy the camera pos from the game.
     gState.pos = this->context1.cameraPos;
   }
 

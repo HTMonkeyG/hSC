@@ -3,5 +3,5 @@
 
 // TODO: Implement camera commands and animation calculations.
 void preupdateAnim(MainCamera *) {
-
+  ;
 }

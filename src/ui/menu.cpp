@@ -5,7 +5,7 @@
 #include "mth/macros.h"
 
 static const char *MODES[] = { "FirstPerson", "Front", "Placed", "WhiskerCamera" }
-  , *FREECAMMODES[] = { "Orientation", "Axial", "Full-direction" }
+  //, *FREECAMMODES[] = { "Orientation", "Axial", "Full-direction" }
   , *FPVMODES[] = { "Elytra", "Barrel-roll" };
 static const f32 STEP = 0.1f;
 
@@ -35,7 +35,13 @@ static void gui_inputXYZ(f32 *v, f32 cursorX) {
   InputSingleAxis("Z", "##Z", v + 2, cursorX);
   ImGui::PopID();
 }
-#undef InputSingleAxis
+/*
+static void gui_checkedInputN() {
+}
+
+static void gui_labeledCheckedInputN() {
+
+}*/
 
 static void gui_subMenuStatic() {
   ImGui::SeparatorText("Set Camera Params");
@@ -79,8 +85,14 @@ static void gui_subMenuStatic() {
   if (ImGui::Button("Reset pos"))
     gState.resetPosFlag = 1;
 
-  ImGui::Checkbox("Lock position", (bool *)&gState.freecamLockPosition);
-  ImGui::Checkbox("Lock rotation", (bool *)&gState.freecamLockRotation);
+  ImGui::Checkbox("Disable camera movement", (bool *)&gState.freecamLockPosition);
+  gui_displayTips(
+    "When this item is checked, the movement inputs will pass to the game.",
+    1);
+  ImGui::Checkbox("Disable camera rotation", (bool *)&gState.freecamLockRotation);
+  gui_displayTips(
+    "When this item is checked, hSC will ignore mouse inputs.",
+    1);
   ImGui::Checkbox("Check collision", (bool *)&gState.freecamCollision);
   ImGui::DragFloat("Rotate speed", &gState.freecamRotateSpeed, .01f, 0, 10.0f);
   ImGui::DragFloat("Movement speed", &gState.freecamSpeed, .01f, 0, 100.0f);
@@ -159,7 +171,7 @@ void gui_windowMain() {
     "Hide the original camera UI. Please adjust the parameters before select"
     "this item.",
     1);
-  
+
   if (ImGui::BeginTabBar("Mode select")) {
     if (ImGui::BeginTabItem("Static")) {
       gState.majorMode = MM_STATIC;
@@ -187,7 +199,7 @@ void gui_windowMain() {
       ImGui::Text("Based on HTModLoader v" HTML_VERSION_NAME ".");
 #endif
       ImGui::TextLinkOpenURL(
-        "<https://www.github.com/HTMonkeyG/hSC>"
+        "<https://www.github.com/HTMonkeyG/hSC>",
         "https://www.github.com/HTMonkeyG/hSC");
       ImGui::EndTabItem();
     }

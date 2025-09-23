@@ -73,7 +73,7 @@ static u64 SkyCameraProp_updateUI_Listener(
   i08 a9
 ) {
   u64 result;
-  if (gState.noOriginalUi)
+  if (gState.enable && gState.noOriginalUi)
     // Disable original camera ui.
     return 0;
   result = ((FnSkyCameraProp_updateUI)gTramp.fn_SkyCameraProp_updateUI)(
