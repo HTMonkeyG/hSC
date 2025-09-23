@@ -13,8 +13,8 @@ static void updatePropStatic(SkyCameraProp *this) {
   // automatically turning off due to being too far away.
   if (gState.overrideDir && gState.cameraMode == CM_FRONT) {
     // Override camera rotations.
-    this->rotateXAnim = this->rotateX = (gState.rot.x - 180.0f) / 180.0f * PI_F;
-    this->rotateYAnim = this->rotateY = -gState.rot.y / 180.0f * PI_F;
+    this->rotateXAnim = this->rotateX = -gState.rot.x;
+    this->rotateYAnim = this->rotateY = -gState.rot.y;
     this->rotateSpeedX = this->rotateSpeedY = 0;
   }
 
