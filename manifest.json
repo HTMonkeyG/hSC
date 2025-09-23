@@ -1,0 +1,17 @@
+{
+  "package_name": "hsc-main",
+  "version": "0.2.0",
+  "game_edition": 3,
+  "mod_name": "hSC Plugin",
+  "description": "A camera modification plugin developed for Sky:CotL.",
+  "main": "hsc-main.dll",
+  "dependencies": {},
+  "keywords": [
+    "camera",
+    "hook",
+    "photography"
+  ],
+  "author": "HTMonkeyG",
+  "license": "MIT",
+  "website": ""
+}

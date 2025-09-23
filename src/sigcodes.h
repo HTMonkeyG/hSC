@@ -2,7 +2,7 @@
 #define __SIGCODES_H__
 
 #include <windows.h>
-#include "aliases.h"
+#include "internal.h"
 
 // ----------------------------------------------------------------------------
 // This file contains all signature codes of the in-game functions hooked or
@@ -65,11 +65,10 @@ static const Signature_t sigE8_Player_getCameraPos = {
 };
 static const Signature_t sigE8_World_interactionTest = {
   .sig =
-    "48 8D 95 ?  ?  ?  ?  4C 8D 45 70 C5 F8 28 DE E8 ",
-    //"?  ?  ?  ?  84 C0 0F 84",
+    "C5 F8 ?  ?  E8 ?  ?  ?  ?  ?  89 ?  84 C0 74 ?  ",
   .name = "World::interactionTest()",
   .indirect = 1,
-  .offset = 0x0F
+  .offset = 0x04
 };
 static const Signature_t sig_WhiskerCamera_update = {
   .sig =
@@ -99,15 +98,14 @@ static const Signature_t sigE8_MainCamera__getDelta = {
 };
 static const Signature_t sigE8_Input_getMouseDeltaPx = {
   .sig =
-    "41 80 7D ?  ?  0F 84 ?  ?  ?  ?  48 8B 8E ?  ?  "
-    "?  ?  48 8D 94 24 ?  ?  ?  ?  E8 ?  ?  ?  ?  C4 "
-    "E2 79 18 05",
+    "48 8D ?  ?  4C 89 F1 48 89 F2 E8 ?  ?  ?  ?  48 "
+    "89 74 24",
   .name = "Input::getMouseDeltaPx()",
   .indirect = 1,
-  .offset = 0x1A
+  .offset = 0x0A
 };
 
-static const Signature_t *funcSig[10] = {
+static const Signature_t *funcSig[9] = {
   &sigE8_SkyCameraProp__updateParams,
   &sigE8_SkyCameraProp_updateUI,
   NULL,

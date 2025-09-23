@@ -1,15 +1,9 @@
 #include <math.h>
 #include "MinHook.h"
 
-#include "types.h"
-#include "hooked.h"
-#include "log.h"
-#include "setup.h"
-#include "camera.h"
-#include "mth/vector.h"
-#include "mth/matrix.h"
-#include "ui/gui.h"
-#include "ui/input.h"
+#include "internal.h"
+#include "utils/log.h"
+#include "ui/ui.h"
 
 // Defines.
 #define MH_SUCCESSED(v, s) ((v) |= (!(s)))
@@ -79,7 +73,7 @@ static u64 SkyCameraProp_updateUI_Listener(
   i08 a9
 ) {
   u64 result;
-  if (gState.noOriginalUi)
+  if (gState.enable && gState.noOriginalUi)
     // Disable original camera ui.
     return 0;
   result = ((FnSkyCameraProp_updateUI)gTramp.fn_SkyCameraProp_updateUI)(

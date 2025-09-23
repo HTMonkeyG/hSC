@@ -6,71 +6,31 @@
 // <https://www.github.com/HTMonkeyG/hSC>.
 // ----------------------------------------------------------------------------
 
-#include "dllmain.h"
+#include <windows.h>
+#include <stdio.h>
+#include <math.h>
+#include "includes/htmod.h"
+#include "MinHook.h"
 
-LPVOID baseAddr;
-
-static DWORD WINAPI onAttach(LPVOID lpParam) {
-  HMODULE hModule = (HMODULE)lpParam;
-  i32 s;
-  DWORD le;
-
-  // Wait for the dx12 to be loaded.
-  s = gui_waitForDll(&le);
-  if (!s) {
-    LOGEF("dxgi.dll or d3d12.dll load timed out: %d\n", le);
-    return 0;
-  }
-
-  // Initialize gui.
-  if (!gui_init(hModule)) {
-    LOGEF("Gui init failed.\n");
-    return 0;
-  }
-  // We'll wait for the gui.
-  if (!gui_waitForInit()) {
-    LOGEF("Gui init timed out.\n");
-    return 0;
-  }
-  LOGI("gui_init() successed.\n");
-
-  // Initialize functions. Sleep for a while in order to wait for the game to
-  // completely decrypt the instructions.
-  Sleep(2500);
-  initAllHooks();
-  createAllHooks();
-
-  return 0;
-}
+#include "internal.h"
+#include "ui/ui.h"
+#include "utils/log.h"
 
 BOOL APIENTRY DllMain(
   HMODULE hModule,
   DWORD dwReason,
   LPVOID lpReserved
 ) {
-  DWORD threadId = 0;
-
   if (dwReason == DLL_PROCESS_ATTACH) {
-    baseAddr = (LPVOID)GetModuleHandleA("Sky.exe");
+    gameBaseAddr = (LPVOID)GetModuleHandleA("Sky.exe");
 
-    if (!baseAddr)
+    if (!gameBaseAddr)
       // Not the correct game process.
       return TRUE;
 
-    recreateConsole();
-
-    LOGI("hSC injected.\n");
-    LOGI("(Sky.exe + 0x0): 0x%p\n", baseAddr);
-
+    hModuleDll = hModule;
+    QueryPerformanceFrequency((LARGE_INTEGER *)&gGui.performFreq);
     MH_Initialize();
-
-    if (!CreateThread(
-      NULL, 0, onAttach, (LPVOID)hModule, 0, &threadId
-    )) {
-      LOGEF("Create subthread failed.\n");
-      return TRUE;
-    }
-    LOGI("CreateThread(): 0x%lX\n", threadId);
   } else if (dwReason == DLL_PROCESS_DETACH) {
     LOGI("hSC detached.\n");
 
