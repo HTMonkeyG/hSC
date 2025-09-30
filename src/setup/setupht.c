@@ -47,6 +47,7 @@ static void keyEventCallbackGeneral(HTKeyEvent *event) {
       event->flags == HTKeyEventFlags_Down
       && gState.enable
       && !gState.freecamLockPosition
+      && gState.overridePos
     )
       // Like elder hSC versions, we only block keyDown messages.
       event->preventFlags |= HTKeyEventPreventFlags_Game;
@@ -58,6 +59,7 @@ static void keyEventCallbackGeneral(HTKeyEvent *event) {
       event->flags == HTKeyEventFlags_Down
       && gState.enable
       && !gState.freecamLockRotation
+      && gState.overrideDir
     )
       // Like elder hSC versions, we only block keyDown messages.
       event->preventFlags |= HTKeyEventPreventFlags_Game;

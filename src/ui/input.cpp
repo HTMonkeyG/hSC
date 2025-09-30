@@ -24,7 +24,7 @@ static void gui_inputStatic() {
     r.y += 1.0f;
   if (HTHotkeyPressed(gBindedKeys.down))
     r.y -= 1.0f;
-  
+
   // Roll.
   if (HTHotkeyPressed(gBindedKeys.rollLeft))
     s.z += 1.0f;
