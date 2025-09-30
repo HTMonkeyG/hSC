@@ -164,7 +164,7 @@ void gui_windowMain() {
 
   // General options.
   if (ImGui::Checkbox("Enable plugin", (bool *)&gState.enable))
-    gState.resetPosFlag = 1;
+    ;//gState.resetPosFlag = 1;
   ImGui::Combo("Use mode", &gState.cameraMode, MODES, IM_ARRAYSIZE(MODES));
   ImGui::Checkbox("No UI", (bool *)&gState.noOriginalUi);
   gui_displayTips(
