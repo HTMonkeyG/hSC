@@ -11,7 +11,7 @@
 #include "mth/euler.h"
 #include "mth/aabb.h"
 
-#define HSC_VERSION "0.3.0"
+#define HSC_VERSION "0.4.0"
 
 #ifdef __cplusplus
 extern "C" {
