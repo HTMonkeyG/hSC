@@ -3,7 +3,6 @@
 #include "includes/htmod.h"
 #include "ui/ui.h"
 #include "internal.h"
-#include "setup/setupapi.h"
 
 // HTML uses key name to sort key bindings, so we add a number to make the key
 // binding list a little bit more tidy.
@@ -86,6 +85,12 @@ __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
   return HT_SUCCESS;
 }
 
+__declspec(dllexport) HTStatus HTMLAPI HTModOnEnable(
+  void *
+) {
+  return HT_SUCCESS;
+}
+
 __declspec(dllexport) void HTMLAPI HTModRenderGui(
   f32 timeElapesed,
   void *reserved
@@ -97,13 +102,6 @@ __declspec(dllexport) void HTMLAPI HTModRenderGui(
   // Handle keyboard input.
   if (gState.enable)
     gui_handleInput();
-}
-
-/**
- * Reserved for non-HTML initialization.
- */
-i08 setupAll() {
-  return 1;
 }
 
 #endif

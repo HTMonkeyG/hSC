@@ -14,7 +14,6 @@
 
 #include "internal.h"
 #include "ui/ui.h"
-#include "utils/log.h"
 
 BOOL APIENTRY DllMain(
   HMODULE hModule,

@@ -2,7 +2,6 @@
 #include "MinHook.h"
 
 #include "internal.h"
-#include "utils/log.h"
 #include "ui/ui.h"
 
 // Defines.
@@ -170,7 +169,7 @@ static u64 Input_getMouseDeltaPx_Listener(u64 a1, v4f *delta) {
 // [SECTION] Initializations.
 // ----------------------------------------------------------------------------
 
-static const void *detourFunc[9] = {
+static void *const detourFunc[9] = {
   SkyCameraProp__updateParams_Listener,
   SkyCameraProp_updateUI_Listener,
   NULL,
@@ -193,10 +192,10 @@ i08 initAllHooks() {
  * Hook all the functions that we need.
  */
 i08 createAllHooks() {
-  MH_STATUS s;
+  HTStatus s;
+  void *p;
   i32 length;
   i08 r = 1;
-  void *fn;
 
   if (gInit)
     return 1;
@@ -206,23 +205,26 @@ i08 createAllHooks() {
     if (!gFunc.functions[i] || !detourFunc[i])
       continue;
 
-    fn = gFunc.functions[i];
-    s = MH_CreateHook(
-      fn,
-      (void *)detourFunc[i],
-      &gTramp.functions[i]);
+    HTAsmFunction fn = {
+      .fn = gFunc.functions[i],
+      .name = RequiredFn[i]->name,
+      .detour = detourFunc[i]
+    };
+    p = gFunc.functions[i];
+    s = HTAsmHookCreate(hModuleDll, &fn);
+    gTramp.functions[i] = fn.origin;
 
-    if (s) {
-      LOGE("Create hook on 0x%p failed.\n", fn);
+    if (!s) {
+      LOGE("Create hook on 0x%p failed: %d.\n", p, HTGetLastError());
       r = 0;
     } else {
-      LOGI("Created hook on 0x%p\n", fn);
-      s = MH_EnableHook(fn);
-      if (s) {
-        LOGE("Enable hook on 0x%p failed.\n", fn);
+      LOGI("Created hook on 0x%p\n", p);
+      s = HTAsmHookEnable(hModuleDll, p);
+      if (!s) {
+        LOGE("Enable hook on 0x%p failed.\n", p);
         r = 0;
       } else
-        LOGI("Enabled hook on 0x%p\n", fn);
+        LOGI("Enabled hook on 0x%p\n", p);
     }
   }
 

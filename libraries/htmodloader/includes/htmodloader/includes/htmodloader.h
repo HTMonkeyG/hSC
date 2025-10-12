@@ -16,8 +16,8 @@
 // Mod loader version.
 // Version number is used for pre-processing statements handling version
 // compatibility.
-#define HTML_VERSION 10100
-#define HTML_VERSION_NAME "1.1.0"
+#define HTML_VERSION 10500
+#define HTML_VERSION_NAME "1.5.0"
 
 #define HTMLAPI __stdcall
 #ifndef HTMLAPIATTR
@@ -26,7 +26,7 @@
 
 // Includes.
 #include <windows.h>
-#include "includes/aliases.h"
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +55,7 @@ typedef enum {
 // Game status.
 typedef struct {
   // Base address of game executable file.
-  void *baseAddr;
+  LPVOID baseAddr;
   // The edition of the game.
   HTGameEdition edition;
   // The window handle of the game.
@@ -65,23 +65,23 @@ typedef struct {
 } HTGameStatus;
 
 // Function prototype.
-typedef void *(HTMLAPI *PFN_HTVoidFunction)(
+typedef LPVOID (HTMLAPI *PFN_HTVoidFunction)(
   void);
 
 // Handle.
-typedef void *HTHandle;
+typedef LPVOID HTHandle;
 
 /* Mod exported function prototypes. */
 
 // Gui renderer.
 typedef void (HTMLAPI *PFN_HTModRenderGui)(
-  float timeElapsed, void *reserved);
+  float, LPVOID);
 // Initialize event
 typedef HTStatus (HTMLAPI *PFN_HTModOnInit)(
-  void *reserved);
+  LPVOID);
 // Mod enable event
 typedef HTStatus (HTMLAPI *PFN_HTModOnEnable)(
-  void *reserved);
+  LPVOID);
 
 /**
  * Get game status object.
@@ -93,41 +93,70 @@ HTMLAPIATTR void HTMLAPI HTGetGameStatus(
  * Get the folder where the game executable file is located.
  */
 HTMLAPIATTR void HTMLAPI HTGetGameExeFolder(
-  char *result, u64 maxLen);
+  LPSTR result, UINT64 maxLen);
 
 /**
  * Get the folder where the mods is located. In most cases, the same as add
  * "\\htmods" to HTGetGameExeFolder()'s result.
  */
 HTMLAPIATTR void HTMLAPI HTGetModFolder(
-  char *result, u64 maxLen);
+  LPSTR result, UINT64 maxLen);
 
 /**
  * Get module handle from name. If module is nullptr, then returns the handle
  * of the caller.
  */
 HTMLAPIATTR HMODULE HTMLAPI HTGetModuleHandle(
-  const char *module);
+  LPCSTR module);
 
 typedef enum {
   HTModInfoFields_ModName = 1,
   HTModInfoFields_PackageName,
   HTModInfoFields_Folder
 } HTModInfoFields_;
-typedef i32 HTModInfoFields;
+typedef UINT32 HTModInfoFields;
 
 /**
  * Expand mod info from manifest.
  */
-HTMLAPIATTR u32 HTMLAPI HTGetModInfoFrom(
+HTMLAPIATTR UINT32 HTMLAPI HTGetModInfoFrom(
   HTHandle hManifest,
   HTModInfoFields info,
-  void *out,
-  u32 maxLen);
+  LPVOID out,
+  UINT32 maxLen);
+
+// Error codes. Partially the same as winerror.h
+typedef int HTError;
+typedef enum {
+  HTError_Success = 0,
+  // ERROR_ACCESS_DENIED.
+  HTError_AccessDenied = 5,
+  // ERROR_INVALID_HANDLE.
+  HTError_InvalidHandle = 6,
+  // ERROR_INVALID_PARAMETER.
+  HTError_InvalidParam = 87,
+  // ERROR_MOD_NOT_FOUND.
+  HTError_ModuleNotFound = 126,
+  // ERROR_ALREADY_EXISTS.
+  HTError_AlreadyExists = 183,
+  // ERROR_NO_MORE_ITEMS.
+  HTError_NoMoreItems = 259,
+  // ERROR_NO_MORE_MATCHES.
+  HTError_NoMoreMatches = 626,
+  // ERROR_NOT_FOUND.
+  HTError_NotFound = 1168
+} HTError_;
+
+HTMLAPIATTR void HTMLAPI HTSetLastError(
+  HTError dwError);
+HTMLAPIATTR HTError HTMLAPI HTGetLastError();
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML signature scan APIs.
+// [SECTION] HTML assembly patch APIs.
 // ----------------------------------------------------------------------------
+
+// Enable or disable all hooks or patches created by the specified mod.
+#define HT_ALL_HOOKS NULL
 
 // Method for obtaining the final address.
 typedef enum {
@@ -142,101 +171,93 @@ typedef enum {
 // Signature code config.
 typedef struct {
   // Signature code.
-  const char *sig;
-  // Function name, only for debug use.
-  const char *name;
+  LPCSTR sig;
   // Method for obtaining the final address.
   HTSigScanType indirect;
   // The byte offset of 0xE8 or 0x15 byte for HT_SCAN_E8 and HT_SCAN_FF15, or
   // the byte offset to the first instruction for HT_SCAN_DIRECT.
-  i32 offset;
-} HTSignature;
-
-/**
- * Scan with signature.
- */
-HTMLAPIATTR void *HTMLAPI HTSigScan(
-  const HTSignature *signature);
-typedef void *(HTMLAPI *PFN_HTSigScan)(
-  const HTSignature *signature);
+  UINT32 offset;
+} HTAsmSig;
 
 // Function address config.
 typedef struct {
-  // The address of the detour function if hooked.
-  void *detour;
+  // Function name, only for debug use.
+  LPCSTR name;
   // The address of the scanned function.
-  void *fn;
+  LPVOID fn;
+  // The address of the detour function if hooked.
+  LPVOID detour;
   // The address of the trampoline function if hooked.
-  void *origin;
-} HTHookFunction;
+  LPVOID origin;
+} HTAsmFunction;
+
+/**
+ * Scan with signature. Note that HTSigScan functions won't call HTSetLastError
+ * to set the error code.
+ */
+HTMLAPIATTR LPVOID HTMLAPI HTSigScan(
+  const HTAsmSig *signature);
 
 /**
  * Scan a single function.
  */
-HTMLAPIATTR void *HTMLAPI HTSigScanFunc(
-  const HTSignature *signature, HTHookFunction *func);
-typedef void *(HTMLAPI *PFN_HTSigScanFunc)(
-  const HTSignature *signature, HTHookFunction *func);
+HTMLAPIATTR LPVOID HTMLAPI HTSigScanFunc(
+  const HTAsmSig *signature, HTAsmFunction *func);
 
 /**
  * Scan an array of functions.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTSigScanFuncEx(
-  const HTSignature **signature, HTHookFunction **func, u32 size);
-typedef HTStatus (HTMLAPI *PFN_HTSigScanFuncEx)(
-  const HTSignature **signature, HTHookFunction **func, u32 size);
-
-// ----------------------------------------------------------------------------
-// [SECTION] HTML inline hook APIs.
-// ----------------------------------------------------------------------------
+  const HTAsmSig **signature, HTAsmFunction **func, UINT32 count);
 
 /**
- * Install hook with MinHook.
+ * Create hook with MinHook. This function won't record the function name.
  */
-HTMLAPIATTR HTStatus HTMLAPI HTInstallHook(
-  void *fn, void *detour, void **origin);
-typedef HTStatus (HTMLAPI *PFN_HTInstallHook)(
-  void *fn, void *detour, void **origin);
+HTMLAPIATTR HTStatus HTMLAPI HTAsmHookCreateRaw(
+  HMODULE hModuleOwner, LPVOID fn, LPVOID detour, LPVOID *origin);
+
+/**
+ * Creates a hook for the specified API function with MinHook.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTAsmHookCreateAPI(
+  HMODULE hModuleOwner, LPCWSTR hModule, LPCSTR func, LPVOID detour, LPVOID *origin, LPVOID *target);
+
+/**
+ * Create a hook from HTHookFunction struct. We must bind the hooks to the mod,
+ * so when a mod is dynamically unloaded, we can destroy all its hooks.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTAsmHookCreate(
+  HMODULE hModuleOwner, HTAsmFunction *func);
 
 /**
  * Enable hook on specified function.
  */
-HTMLAPIATTR HTStatus HTMLAPI HTEnableHook(
-  void *fn);
-typedef HTStatus (HTMLAPI *PFN_HTEnableHook)(
-  void *fn);
+HTMLAPIATTR HTStatus HTMLAPI HTAsmHookEnable(
+  HMODULE hModuleOwner, LPVOID fn);
 
 /**
  * Disable hook on specified function.
  */
-HTMLAPIATTR HTStatus HTMLAPI HTDisableHook(
-  void *fn);
-typedef HTStatus (HTMLAPI *PFN_HTDisableHook)(
-  void *fn);
+HTMLAPIATTR HTStatus HTMLAPI HTAsmHookDisable(
+  HMODULE hModuleOwner, LPVOID fn);
 
 /**
- * Install hook from HTHookFunction struct.
+ * [Future] Create a patch on specified address.
  */
-HTMLAPIATTR HTStatus HTMLAPI HTInstallHookEx(
-  HTHookFunction *func);
-typedef HTStatus (HTMLAPI *PFN_HTInstallHookEx)(
-  HTHookFunction *func);
+HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchCreate(
+  HMODULE hModuleOwner, LPVOID target, LPCVOID data, UINT64 size);
 
 /**
- * Enable hook on specified function.
- */ 
-HTMLAPIATTR HTStatus HTMLAPI HTEnableHookEx(
-  HTHookFunction *func);
-typedef void (HTMLAPI *PFN_HTEnableHookEx)(
-  HTHookFunction *func);
-
-/**
- * Disable hook on specified function.
+ * [Future] Enable patch.
  */
-HTMLAPIATTR HTStatus HTMLAPI HTDisableHookEx(
-  HTHookFunction *func);
-typedef void (HTMLAPI *PFN_HTDisableHookEx)(
-  HTHookFunction *func);
+HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchEnable(
+  HMODULE hModuleOwner, LPVOID target);
+
+/**
+ * [Future] Disable patch.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchDisable(
+  HMODULE hModuleOwner, LPVOID target);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML memory manager APIs.
@@ -245,15 +266,15 @@ typedef void (HTMLAPI *PFN_HTDisableHookEx)(
 /**
  * Allocate a sized memory block.
  */
-HTMLAPIATTR void *HTMLAPI HTMemAlloc(
-  u64 size);
+HTMLAPIATTR LPVOID HTMLAPI HTMemAlloc(
+  UINT64 size);
 
 /**
  * Allocate space for an array of `count` objects, each of `size` bytes.
  * Different from calloc(), HTMemNew won't initialize the memory block.
  */
-HTMLAPIATTR void *HTMLAPI HTMemNew(
-  u64 count, u64 size);
+HTMLAPIATTR LPVOID HTMLAPI HTMemNew(
+  UINT64 count, UINT64 size);
 
 /**
  * Free a memory block allocated with HTMemAlloc() or HTMemNew(). Returns
@@ -262,7 +283,7 @@ HTMLAPIATTR void *HTMLAPI HTMemNew(
  * Mod needs to reset pointer variables to prevent dangling pointers.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTMemFree(
-  void *pointer);
+  LPVOID pointer);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML mod communication APIs.
@@ -270,7 +291,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTMemFree(
 
 // Event callback.
 typedef void (HTMLAPI *PFN_HTEventCallback)(
-  const void *data);
+  const LPVOID data);
 
 #define HT_INVALID_HANDLE NULL
 
@@ -278,7 +299,7 @@ typedef void (HTMLAPI *PFN_HTEventCallback)(
  * Get the address of a registered function.
  */
 HTMLAPIATTR PFN_HTVoidFunction HTMLAPI HTGetProcAddr(
-  HMODULE hModule, const char *name);
+  HMODULE hModule, LPCSTR name);
 
 /**
  * Get a handle for the mod manifest.
@@ -295,7 +316,7 @@ HTMLAPIATTR HTHandle HTMLAPI HTGetModManifest(
  * registering functions.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommRegFunction(
-  HMODULE hModule, const char *name, PFN_HTVoidFunction func);
+  HMODULE hModule, LPCSTR name, PFN_HTVoidFunction func);
 
 /**
  * Register an event listener with given event name.
@@ -305,7 +326,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommRegFunction(
  * is only valid before the callback function returns.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommOnEvent(
-  const char *name, PFN_HTEventCallback callback);
+  LPCSTR name, PFN_HTEventCallback callback);
 
 #define HTCommAddEventListener HTCommOnEvent
 
@@ -313,7 +334,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommOnEvent(
  * Remove a registered event listener.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommOffEvent(
-  const char *name, PFN_HTEventCallback callback);
+  LPCSTR name, PFN_HTEventCallback callback);
 
 #define HTCommRemoveEventListener HTCommOffEvent
   
@@ -323,7 +344,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommOffEvent(
  * DO NOT emit the event itself in the callback function.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommEmitEvent(
-  const char *name, void *reserved, void *data);
+  LPCSTR name, LPVOID reserved, LPVOID data);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML hotkey register APIs.
@@ -437,7 +458,7 @@ typedef enum {
 } HTKeyCode;
 
 // Key event properties.
-typedef i32 HTKeyEventFlags;
+typedef UINT32 HTKeyEventFlags;
 typedef enum {
   HTKeyEventFlags_None = 0,
   HTKeyEventFlags_Down,
@@ -449,7 +470,7 @@ typedef enum {
   HTKeyEventFlags_MouseWheelLeft,
   HTKeyEventFlags_MouseWheelRight,
 
-  // [Internal] Only for internal HTHotkeyDispatch() function. The flags below
+  // [Internal] Only for internal HTiHotkeyDispatch() function. The flags below
   // will never be set on callbacks.
   HTKeyEventFlags_Repeat = 1 << 16,
   HTKeyEventFlags_Blocked = 1 << 17,
@@ -457,7 +478,7 @@ typedef enum {
 } HTKeyEventFlags_;
 
 // Key binding flags.
-typedef i32 HTHotkeyFlags;
+typedef UINT32 HTHotkeyFlags;
 typedef enum {
   // Default value. The KeyDown events will be blocked when any ImGui window is
   // focused, due to io.WantCaptureKeyboard and io.WantCaptureMouse flags. Set
@@ -471,7 +492,7 @@ typedef enum {
 } HTHotkeyFlags_;
 
 // Determine how to intercept the key message.
-typedef i32 HTKeyEventPreventFlags;
+typedef UINT32 HTKeyEventPreventFlags;
 typedef enum {
   // Pass the event as normal.
   HTKeyEventPreventFlags_None = 0,
@@ -494,7 +515,7 @@ typedef struct {
   HTKeyCode key;
   // [In] Is the event a key press event. This field has been deprecated, reserved
   // for compatibility.
-  u08 down;
+  unsigned char down;
   // [In] Key event flags, marked the type of this event.
   HTKeyEventFlags flags;
 
@@ -504,14 +525,20 @@ typedef struct {
 
 // Hotkey callback.
 typedef void (HTMLAPI *PFN_HTHotkeyCallback)(
-  HTKeyEvent *event);
+  HTKeyEvent *);
+
+/**
+ * Get the name string of a key.
+ */
+HTMLAPIATTR LPCSTR HTMLAPI HTHotkeyGetName(
+  HTKeyCode key);
 
 /**
  * Shortcut for passing HTHotkeyFlags_None to HTHotkeyRegisterEx()
  */
 HTMLAPIATTR HTHandle HTMLAPI HTHotkeyRegister(
   HMODULE hModule,
-  const char *name,
+  LPCSTR name,
   HTKeyCode defaultCode);
 
 /**
@@ -519,7 +546,7 @@ HTMLAPIATTR HTHandle HTMLAPI HTHotkeyRegister(
  */
 HTMLAPIATTR HTHandle HTMLAPI HTHotkeyRegisterEx(
   HMODULE hModule,
-  const char *name,
+  LPCSTR name,
   HTKeyCode defaultCode,
   HTHotkeyFlags flags);
 
@@ -529,12 +556,21 @@ HTMLAPIATTR HTHandle HTMLAPI HTHotkeyRegisterEx(
  */
 HTMLAPIATTR HTStatus HTMLAPI HTHotkeyBind(
   HTHandle hKey,
-  HTKeyCode key);
+  HTKeyCode keyCode);
+
+/**
+ * Reset the key bind to default.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTHotkeyBindReset(
+  HTHandle hKey);
 
 /**
  * Check if a registered key has been pressed.
+ * 
+ * For a better performance, this function DOES NOT check the handle. Mods MUST
+ * ensure the handle is valid.
  */
-HTMLAPIATTR u32 HTMLAPI HTHotkeyPressed(
+HTMLAPIATTR UINT32 HTMLAPI HTHotkeyPressed(
   HTHandle hKey);
 
 /**
@@ -554,7 +590,36 @@ HTMLAPIATTR HTStatus HTMLAPI HTHotkeyListen(
  */
 HTMLAPIATTR HTStatus HTMLAPI HTHotkeyUnlisten(
   HTHandle hKey,
-  void *reserved);
+  LPVOID reserved);
+
+// ----------------------------------------------------------------------------
+// [SECTION] HTML console text APIs.
+// ----------------------------------------------------------------------------
+
+/**
+ * Prints text on the in-game console.
+ * 
+ * Use '§' to represent color code, §0~§f represents the color in the terminal
+ * escape sequence, §#<DWORD> which DWORD is a hex color code in AABBGGRR
+ * format represents full RGBA color. Color codes won't be displayed on the
+ * console.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTTellText(
+  LPCSTR format, ...);
+
+HTMLAPIATTR HTStatus HTMLAPI HTTellTextV(
+  LPCSTR format, va_list v);
+
+/**
+ * Prints raw text on the in-game console.
+ * 
+ * This function disables color escape sequences.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTTellRaw(
+  LPCSTR format, ...);
+
+HTMLAPIATTR HTStatus HTMLAPI HTTellRawV(
+  LPCSTR format, va_list v);
 
 #ifdef __cplusplus
 }

@@ -162,40 +162,30 @@ typedef struct {
 } InteractionResult;
 
 //-----------------------------------------------------------------------------
-// [SECTION] Signature scanner of hSC.
+// [SECTION] Log implementations of hSC.
 //-----------------------------------------------------------------------------
 
-#ifndef USE_HTML
-// Method for obtaining the final address.
-typedef enum {
-  // The Signature represents the function body.
-  HT_SCAN_DIRECT = 0,
-  // The signature represents the E8 or E9 instruction that calls the function.
-  HT_SCAN_E8,
-  // The signature represents the FF15 instruction that calls the function.
-  HT_SCAN_FF15,
-} HTSigScanType;
+#define LOGI(format, ...) logImp("§f[hSC][INFO] " format, ##__VA_ARGS__)
+#define LOGW(format, ...) logImp("§e[hSC][WARN] " format, ##__VA_ARGS__)
+#define LOGE(format, ...) logImp("§c[hSC][ERR] " format, ##__VA_ARGS__)
+#define LOGEF(format, ...) logImp("§c[hSC][ERR][FATAL] " format, ##__VA_ARGS__)
 
-// Signature code config.
-typedef struct {
-  // Signature code.
-  const char *sig;
-  // Function name, only for debug use.
-  const char *name;
-  // Method for obtaining the final address.
-  HTSigScanType indirect;
-  // The byte offset of 0xE8 or 0x15 byte for HT_SCAN_E8 and HT_SCAN_FF15, or
-  // the byte offset to the first instruction for HT_SCAN_DIRECT.
-  i32 offset;
-} HTSignature;
-#endif
+static void logImp(
+  const char *format,
+  ...
+) {
+  va_list arg;
 
-void *sigScan(const char *moduleName, const char *sig, i32 offset);
-void *sigScanE8(const char *moduleName, const char *sig, i32 offset);
+  va_start(arg, format);
+  HTTellTextV(format, arg);
+  va_end(arg);
+}
 
 //-----------------------------------------------------------------------------
 // [SECTION] Plugin setup functions.
 //-----------------------------------------------------------------------------
+
+#define REQUIRED_FUNC_COUNT 9
 
 typedef union {
   struct {
@@ -225,8 +215,17 @@ typedef union {
   void *functions[9];
 } SetupFunctions_t;
 
-i08 setupFuncWithSig(SetupFunctions_t *functions);
-i08 setupPaths(HMODULE hModule, wchar_t *prefPath, char *guiIniPath);
+typedef struct {
+  HTAsmSig s;
+  const char *name;
+} NamedSig;
+
+extern const NamedSig *const RequiredFn[REQUIRED_FUNC_COUNT];
+
+i08 setupFuncWithSig(
+  SetupFunctions_t *functions);
+i08 setupPaths(
+  HMODULE hModule, wchar_t *prefPath);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Hook installer and hooked function type declarations.
