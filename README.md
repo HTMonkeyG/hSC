@@ -33,7 +33,7 @@
 &emsp;&emsp;~~该模式中可以编辑运镜关键帧。~~
 
 ## 二、使用方式
-1. 下载并安装版本大于v1.1.0的[HTModLoader](https://github.com/HTMonkeyG/HTML-Sky/releases/latest)。
+1. 下载并安装版本大于等于v1.5.0的[HTModLoader](https://github.com/HTMonkeyG/HTML-Sky/releases/latest)。
 2. 下载仓库release界面下的最新版.zip文件。
 3. 将解压出的`hsc-main.dll`与`manifest.json`放置于`htmodloader/mods`下的文件夹内。存放hSC的文件夹可为任意名称，例如：
 ```
