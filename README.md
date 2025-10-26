@@ -10,6 +10,7 @@
 1. ❌优化排版，使所有输入框的文字置于左侧。
 2. ❌将Scale参数改为FOV参数，使其可以对Whisker模式通用。
 3. ❌增加用户设置保存功能。
+4. ❌在Static模式中增加修改角色头部朝向及身体朝向的选项。
 
 ## 一、插件功能
 &emsp;&emsp;完整使用手册请[点击此处](https://github.com/HTMonkeyG/hSC/blob/main/doc/manual.md)。<br>
