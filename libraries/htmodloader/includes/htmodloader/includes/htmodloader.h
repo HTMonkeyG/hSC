@@ -16,8 +16,8 @@
 // Mod loader version.
 // Version number is used for pre-processing statements handling version
 // compatibility.
-#define HTML_VERSION 10500
-#define HTML_VERSION_NAME "1.5.0"
+#define HTML_VERSION 10801
+#define HTML_VERSION_NAME "1.8.1"
 
 #define HTMLAPI __stdcall
 #ifndef HTMLAPIATTR
@@ -42,15 +42,13 @@ typedef enum {
   HT_SUCCESS = 1
 } HTStatus;
 
-// Game editions.
-typedef enum {
-  // Uninitialized state.
-  HT_EDITION_UNKNOWN = 0,
-  // Chinese edition.
-  HT_EDITION_CHINESE,
-  // International edition.
-  HT_EDITION_INTERNATIONAL
-} HTGameEdition;
+// Game editions. Defined by backends.
+typedef int HTGameEdition;
+
+// Uninitialized state.
+#define HT_ImplNull_EditionUnknown 0
+// Only for debug use, don't check edition compatibility.
+#define HT_ImplNull_EditionAll 0xFFFFFFFF
 
 // Game status.
 typedef struct {
@@ -84,6 +82,19 @@ typedef HTStatus (HTMLAPI *PFN_HTModOnEnable)(
   LPVOID);
 
 /**
+ * Get the loader version which has loaded the mod.
+ */
+HTMLAPIATTR void HTMLAPI HTGetLoaderVersion(
+  UINT32 *result);
+
+/**
+ * Get the loader version name which has loaded the mod.
+ */
+HTMLAPIATTR void HTMLAPI HTGetLoaderVersionName(
+  LPSTR result,
+  UINT32 max);
+
+/**
  * Get game status object.
  */
 HTMLAPIATTR void HTMLAPI HTGetGameStatus(
@@ -93,14 +104,16 @@ HTMLAPIATTR void HTMLAPI HTGetGameStatus(
  * Get the folder where the game executable file is located.
  */
 HTMLAPIATTR void HTMLAPI HTGetGameExeFolder(
-  LPSTR result, UINT64 maxLen);
+  LPSTR result,
+  UINT64 maxLen);
 
 /**
  * Get the folder where the mods is located. In most cases, the same as add
  * "\\htmods" to HTGetGameExeFolder()'s result.
  */
 HTMLAPIATTR void HTMLAPI HTGetModFolder(
-  LPSTR result, UINT64 maxLen);
+  LPSTR result,
+  UINT64 maxLen);
 
 /**
  * Get module handle from name. If module is nullptr, then returns the handle
@@ -118,12 +131,27 @@ typedef UINT32 HTModInfoFields;
 
 /**
  * Expand mod info from manifest.
+ * 
+ * Returns copied the number of bytes written to the buffer pointed to by
+ * `out`.
+ * 
+ * If the function succeeds and `maxLen` is 0, the return value is the required
+ * size, in bytes, for the buffer indicated by `out`.
  */
 HTMLAPIATTR UINT32 HTMLAPI HTGetModInfoFrom(
   HTHandle hManifest,
   HTModInfoFields info,
   LPVOID out,
   UINT32 maxLen);
+
+/**
+ * Get the name of currently active backends.
+ * 
+ * The name of the backends MUST NOT longer than 32 bytes, including '\0'.
+ */
+HTMLAPIATTR void HTMLAPI HTGetActiveBackendName(
+  LPSTR gl,
+  LPSTR game);
 
 // Error codes. Partially the same as winerror.h
 typedef int HTError;
@@ -135,6 +163,8 @@ typedef enum {
   HTError_InvalidHandle = 6,
   // ERROR_INVALID_PARAMETER.
   HTError_InvalidParam = 87,
+  // ERROR_INSUFFICIENT_BUFFER.
+  HTError_InsufficientBuffer = 122,
   // ERROR_MOD_NOT_FOUND.
   HTError_ModuleNotFound = 126,
   // ERROR_ALREADY_EXISTS.
@@ -147,9 +177,69 @@ typedef enum {
   HTError_NotFound = 1168
 } HTError_;
 
+// Set the last error code of HTML API.
 HTMLAPIATTR void HTMLAPI HTSetLastError(
   HTError dwError);
+
+// Get the last error code of HTML API.
 HTMLAPIATTR HTError HTMLAPI HTGetLastError();
+
+// For calling ImGui from DLLs that can't link ImGui from htmodloader.lib.
+typedef struct {
+  LPVOID pImGui;
+  PFN_HTVoidFunction pImAllocatorAllocFunc;
+  PFN_HTVoidFunction pImAllocatorFreeFunc;
+  LPVOID pImAllocatorUserData;
+} HTImGuiContexts;
+
+/**
+ * Get ImGui global context for those mods which can't link ImGui from
+ * htmodloader.lib.
+ * 
+ * Call this function inside HTModRenderGui(), on the first frame, and set the
+ * context of the mod's own ImGui library after calling ImGui functions.
+ * 
+ * Note that all ImGui drawing calls, whatever with or without the loader,
+ * should only be put inside HTModRenderGui().
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTImGuiDispatch(
+  HTImGuiContexts *context);
+
+typedef enum {
+  HTOptionType_Invalid = 0,
+  HTOptionType_Bool,
+  HTOptionType_Double,
+  HTOptionType_String
+} HTOptionType;
+
+/**
+ * Get customized option value with the specified key.
+ * 
+ * For a string value, if `cch` != NULL and `data` == NULL, then the function
+ * only returns the required byte count in `cch`. If `data` != NULL, the function
+ * writes the string and returns the written byte count in `cch`, the function
+ * won't exceed the buffer size originally specified by `cch`.
+ * 
+ * For other values, `cch` is ignored.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTOptionGetCustom(
+  HMODULE hModule,
+  LPCSTR key,
+  HTOptionType type,
+  LPVOID data,
+  UINT32 *cch);
+
+/**
+ * Set customized option value with the specified key.
+ * 
+ * Options will be stored in options.json. DO NOT call this function frequently
+ * or use it to store large volumes of data.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTOptionSetCustom(
+  HMODULE hModule,
+  LPCSTR key,
+  HTOptionType type,
+  LPCVOID data);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML assembly patch APIs.
@@ -202,62 +292,81 @@ HTMLAPIATTR LPVOID HTMLAPI HTSigScan(
  * Scan a single function.
  */
 HTMLAPIATTR LPVOID HTMLAPI HTSigScanFunc(
-  const HTAsmSig *signature, HTAsmFunction *func);
+  const HTAsmSig *signature,
+  HTAsmFunction *func);
 
 /**
  * Scan an array of functions.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTSigScanFuncEx(
-  const HTAsmSig **signature, HTAsmFunction **func, UINT32 count);
+  const HTAsmSig **signature,
+  HTAsmFunction **func,
+  UINT32 count);
 
 /**
  * Create hook with MinHook. This function won't record the function name.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmHookCreateRaw(
-  HMODULE hModuleOwner, LPVOID fn, LPVOID detour, LPVOID *origin);
+  HMODULE hModuleOwner,
+  LPVOID fn,
+  LPVOID detour,
+  LPVOID *origin);
 
 /**
  * Creates a hook for the specified API function with MinHook.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmHookCreateAPI(
-  HMODULE hModuleOwner, LPCWSTR hModule, LPCSTR func, LPVOID detour, LPVOID *origin, LPVOID *target);
+  HMODULE hModuleOwner,
+  LPCWSTR hModule,
+  LPCSTR func,
+  LPVOID detour,
+  LPVOID *origin,
+  LPVOID *target);
 
 /**
  * Create a hook from HTHookFunction struct. We must bind the hooks to the mod,
  * so when a mod is dynamically unloaded, we can destroy all its hooks.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmHookCreate(
-  HMODULE hModuleOwner, HTAsmFunction *func);
+  HMODULE hModuleOwner,
+  HTAsmFunction *func);
 
 /**
  * Enable hook on specified function.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmHookEnable(
-  HMODULE hModuleOwner, LPVOID fn);
+  HMODULE hModuleOwner,
+  LPVOID fn);
 
 /**
  * Disable hook on specified function.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmHookDisable(
-  HMODULE hModuleOwner, LPVOID fn);
+  HMODULE hModuleOwner,
+  LPVOID fn);
 
 /**
  * [Future] Create a patch on specified address.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchCreate(
-  HMODULE hModuleOwner, LPVOID target, LPCVOID data, UINT64 size);
+  HMODULE hModuleOwner,
+  LPVOID target,
+  LPCVOID data,
+  UINT64 size);
 
 /**
  * [Future] Enable patch.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchEnable(
-  HMODULE hModuleOwner, LPVOID target);
+  HMODULE hModuleOwner,
+  LPVOID target);
 
 /**
  * [Future] Disable patch.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchDisable(
-  HMODULE hModuleOwner, LPVOID target);
+  HMODULE hModuleOwner,
+  LPVOID target);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML memory manager APIs.
@@ -274,7 +383,8 @@ HTMLAPIATTR LPVOID HTMLAPI HTMemAlloc(
  * Different from calloc(), HTMemNew won't initialize the memory block.
  */
 HTMLAPIATTR LPVOID HTMLAPI HTMemNew(
-  UINT64 count, UINT64 size);
+  UINT64 count,
+  UINT64 size);
 
 /**
  * Free a memory block allocated with HTMemAlloc() or HTMemNew(). Returns
@@ -299,7 +409,8 @@ typedef void (HTMLAPI *PFN_HTEventCallback)(
  * Get the address of a registered function.
  */
 HTMLAPIATTR PFN_HTVoidFunction HTMLAPI HTGetProcAddr(
-  HMODULE hModule, LPCSTR name);
+  HMODULE hModule,
+  LPCSTR name);
 
 /**
  * Get a handle for the mod manifest.
@@ -316,7 +427,9 @@ HTMLAPIATTR HTHandle HTMLAPI HTGetModManifest(
  * registering functions.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommRegFunction(
-  HMODULE hModule, LPCSTR name, PFN_HTVoidFunction func);
+  HMODULE hModule,
+  LPCSTR name,
+  PFN_HTVoidFunction func);
 
 /**
  * Register an event listener with given event name.
@@ -326,7 +439,8 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommRegFunction(
  * is only valid before the callback function returns.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommOnEvent(
-  LPCSTR name, PFN_HTEventCallback callback);
+  LPCSTR name,
+  PFN_HTEventCallback callback);
 
 #define HTCommAddEventListener HTCommOnEvent
 
@@ -334,7 +448,8 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommOnEvent(
  * Remove a registered event listener.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommOffEvent(
-  LPCSTR name, PFN_HTEventCallback callback);
+  LPCSTR name,
+  PFN_HTEventCallback callback);
 
 #define HTCommRemoveEventListener HTCommOffEvent
   
@@ -344,7 +459,9 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommOffEvent(
  * DO NOT emit the event itself in the callback function.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommEmitEvent(
-  LPCSTR name, LPVOID reserved, LPVOID data);
+  LPCSTR name,
+  LPVOID reserved,
+  LPVOID data);
 
 // ----------------------------------------------------------------------------
 // [SECTION] HTML hotkey register APIs.
@@ -511,7 +628,7 @@ typedef struct {
   HTHandle hKey;
   // [In] Key code of this event. For HTKeyEventFlags_Down and HTKeyEventFlags_Up,
   // this field is the key pressed. For HTKeyEventFlags_ChangeBind and 
-  // HTKeyEventFlags_ResetBind, is the previous binded key.
+  // HTKeyEventFlags_ResetBind, is the previous bound key.
   HTKeyCode key;
   // [In] Is the event a key press event. This field has been deprecated, reserved
   // for compatibility.
@@ -528,7 +645,7 @@ typedef void (HTMLAPI *PFN_HTHotkeyCallback)(
   HTKeyEvent *);
 
 /**
- * Get the name string of a key.
+ * Get the name string of a key code.
  */
 HTMLAPIATTR LPCSTR HTMLAPI HTHotkeyGetName(
   HTKeyCode key);
@@ -551,7 +668,13 @@ HTMLAPIATTR HTHandle HTMLAPI HTHotkeyRegisterEx(
   HTHotkeyFlags flags);
 
 /**
- * Change the binded key for a hotkey. If `key` is HTKey_None, then this
+ * Get the bound key from a key binding. Returns HTKey_NamedKey_END if failed.
+ */
+HTMLAPIATTR HTKeyCode HTMLAPI HTHotkeyBindGet(
+  HTHandle hKey);
+
+/**
+ * Change the bound key for a hotkey. If `key` is HTKey_None, then this
  * function resets the key bind.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTHotkeyBind(
@@ -605,10 +728,12 @@ HTMLAPIATTR HTStatus HTMLAPI HTHotkeyUnlisten(
  * console.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTTellText(
-  LPCSTR format, ...);
+  LPCSTR format,
+  ...);
 
 HTMLAPIATTR HTStatus HTMLAPI HTTellTextV(
-  LPCSTR format, va_list v);
+  LPCSTR format,
+  va_list v);
 
 /**
  * Prints raw text on the in-game console.
@@ -616,10 +741,60 @@ HTMLAPIATTR HTStatus HTMLAPI HTTellTextV(
  * This function disables color escape sequences.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTTellRaw(
-  LPCSTR format, ...);
+  LPCSTR format,
+  ...);
 
 HTMLAPIATTR HTStatus HTMLAPI HTTellRawV(
-  LPCSTR format, va_list v);
+  LPCSTR format,
+  va_list v);
+
+// ----------------------------------------------------------------------------
+// [SECTION] HTML persistent data storage APIs.
+// ----------------------------------------------------------------------------
+
+/**
+ * Store the given data into LevelDB with the given key.
+ * 
+ * Both the key and value is considered as a binary buffer.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTDataStore(
+  HMODULE hModule,
+  const char *key,
+  UINT64 keyLen,
+  const char *value,
+  UINT64 valueLen);
+
+/**
+ * Get a stored value with given key.
+ */
+HTMLAPIATTR char *HTMLAPI HTDataGet(
+  HMODULE hModule,
+  const char *key,
+  UINT64 keyLen,
+  UINT64 *valueLen);
+
+/**
+ * The key's length is calculated automatically by HTDataStoreStringKey()
+ * and HTDataGetStringKey().
+ * 
+ * The key's length don't include the zero terminator.
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTDataStoreStringKey(
+  HMODULE hModule,
+  const char *key,
+  const char *value,
+  UINT64 valueLen);
+
+HTMLAPIATTR char *HTMLAPI HTDataGetStringKey(
+  HMODULE hModule,
+  const char *key,
+  UINT64 *valueLen);
+
+/**
+ * Free the pointer returned by HTDataGet().
+ */
+HTMLAPIATTR void HTMLAPI HTDataFree(
+  char *value);
 
 #ifdef __cplusplus
 }
