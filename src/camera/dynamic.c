@@ -3,7 +3,7 @@
 #include "fpv/elytra.h"
 #include "internal.h"
 
-void preupdateDynamic(MainCamera *this) {
+void hscPreupdateDynamic(MainCamera *this) {
   v4f deltaRot = {0}
     , mouseDelta;
 
@@ -15,7 +15,7 @@ void preupdateDynamic(MainCamera *this) {
     return;
   }
 
-  mouseDelta = gui_getFacingDeltaRad();
+  mouseDelta = hscGetFacingDeltaRad();
   deltaRot.x = -mouseDelta.x;
   deltaRot.y = mouseDelta.y;
   deltaRot.z = gState.facingInput.z * gGui.timeElapsedSecond;

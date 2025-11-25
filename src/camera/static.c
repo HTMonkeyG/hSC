@@ -46,7 +46,7 @@ static i08 freecamCheckCollision(
       continue;
 
     while (
-      ((FnWorld_interactionTest)gTramp.fn_Level_interactionTest)(
+      ((PFN_World_interactionTest)gTramp.fn_Level_interactionTest)(
         gSavedLevelContext, &origin, &dir, len, NULL, (i08 *)&ir)
     ) {
       if (iter >= 4) {
@@ -58,7 +58,7 @@ static i08 freecamCheckCollision(
 
       // Subtract the projection of the displacement vector onto the normal
       // vector to obtain the tangential component of the displacement vector.
-      vec = v4fsub(vec, v4fprojection(vec, ir.normalize));
+      vec = v4fsub(vec, v4fprojection(vec, ir.normal));
       // Use the tangential vector to iterate the calculation 3 times, to avoid
       // corruptions at the intersection of two faces.
       dir = v4fnormalize(vec);
@@ -83,7 +83,7 @@ static i08 freecamCheckCollision(
   return result;
 }
 
-void preupdateStatic(MainCamera *this) {
+void hscPreupdateStatic(MainCamera *this) {
   // This function does:
   // overrideDir
   //   -> Calculate local matrix from rotation inputs.
@@ -105,7 +105,7 @@ void preupdateStatic(MainCamera *this) {
   AABB_t aabb;
 
   if (gState.overrideDir) {
-    mouseDelta = gui_getFacingDeltaRad();
+    mouseDelta = hscGetFacingDeltaRad();
 
     // Convert facing directions to radians.
     gState.rot = v4fscale(gState.rotDeg, PI_F / 180.0f);
@@ -178,7 +178,7 @@ void preupdateStatic(MainCamera *this) {
   }
 
   // Copy position vector to local matrix, the vector is copied to the game in
-  // updateCameraMain().
+  // hscUpdateCameraMain().
   gState.mat[3] = gState.pos;
 
   gState.usePos = gState.overridePos;

@@ -48,7 +48,7 @@ static void updatePropAnim(SkyCameraProp *this) {
  * Calculate the rotation matrix and camera pos with gui data, and save
  * caculated data to gState.
  */
-void updatePropMain(SkyCameraProp *this) {
+void hscUpdatePropMain(SkyCameraProp *this) {
   if (!gState.enable)
     return;
 

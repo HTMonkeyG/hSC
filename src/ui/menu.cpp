@@ -9,7 +9,10 @@ static const char *MODES[] = { "FirstPerson", "Front", "Placed", "WhiskerCamera"
   , *FPVMODES[] = { "Elytra", "Barrel-roll" };
 static const f32 STEP = 0.1f;
 
-void gui_displayTips(const char *desc, i08 sameLine) {
+void hscUIShowTips(
+  const char *desc,
+  i08 sameLine
+) {
   if (sameLine)
     ImGui::SameLine();
   ImGui::TextDisabled("(?)");
@@ -28,33 +31,27 @@ void gui_displayTips(const char *desc, i08 sameLine) {
   ImGui::SameLine(),\
   ImGui::InputScalar(l, ImGuiDataType_Float, p, &STEP, nullptr, "%.3f")\
 )
-static void gui_inputXYZ(f32 *v, f32 cursorX) {
+static void inputFloatXYZ(f32 *v, f32 cursorX) {
   ImGui::PushID((void *)v);
   InputSingleAxis("X", "##X", v, cursorX);
   InputSingleAxis("Y", "##Y", v + 1, cursorX);
   InputSingleAxis("Z", "##Z", v + 2, cursorX);
   ImGui::PopID();
 }
-/*
-static void gui_checkedInputN() {
-}
+#undef InputSingleAxis
 
-static void gui_labeledCheckedInputN() {
-
-}*/
-
-static void gui_subMenuStatic() {
+static void hscUIMenuStatic() {
   ImGui::SeparatorText("Set Camera Params");
 
   // Camera position input.
   ImGui::Checkbox("Pos", (bool *)&gState.overridePos);
   ImGui::SameLine();
-  gui_inputXYZ(&gState.pos.x, ImGui::GetCursorPosX());
+  inputFloatXYZ(&gState.pos.x, ImGui::GetCursorPosX());
 
   // Camera rotation input.
   ImGui::Checkbox("Rot", (bool *)&gState.overrideDir);
   ImGui::SameLine();
-  gui_inputXYZ(&gState.rotDeg.x, ImGui::GetCursorPosX());
+  inputFloatXYZ(&gState.rotDeg.x, ImGui::GetCursorPosX());
 
   // Clamp camera facing.
   gState.rotDeg.x = fmodf(gState.rotDeg.x, 360.0f);
@@ -86,11 +83,11 @@ static void gui_subMenuStatic() {
     gState.resetPosFlag = 1;
 
   ImGui::Checkbox("Disable camera movement", (bool *)&gState.freecamLockPosition);
-  gui_displayTips(
+  hscUIShowTips(
     "When this item is checked, the movement inputs will pass to the game.",
     1);
   ImGui::Checkbox("Disable camera rotation", (bool *)&gState.freecamLockRotation);
-  gui_displayTips(
+  hscUIShowTips(
     "When this item is checked, hSC will ignore mouse inputs.",
     1);
   ImGui::Checkbox("Check collision", (bool *)&gState.freecamCollision);
@@ -98,7 +95,7 @@ static void gui_subMenuStatic() {
   ImGui::DragFloat("Movement speed", &gState.freecamSpeed, .01f, 0, 100.0f);
 }
 
-static void gui_subMenuDynamic() {
+static void hscUIMenuDynamic() {
   ImGui::SeparatorText("Dynamic mode");
 
   ImGui::Combo(
@@ -111,12 +108,12 @@ static void gui_subMenuDynamic() {
     gState.resetPosFlag = 1;
 }
 
-static void gui_subMenuAnim() {
+static void hscUIMenuAnim() {
   ImGui::SeparatorText("Animation mode");
   // TODO: Under development.
 }
 
-static void gui_subMenuSettings() {
+static void hscUIMenuSettings() {
   ImGui::SeparatorText("General settings");
 
   ImGui::Text("Mouse sensitivity");
@@ -137,7 +134,7 @@ static void gui_subMenuSettings() {
   ImGui::SeparatorText("Freecam settings");
   
   ImGui::Text("Full-takeover by default");
-  gui_displayTips(
+  hscUIShowTips(
     "The plugin will automatically obtain mouse increments and calculate"
     "rotations, instead of using the game's original calculations.",
     1);
@@ -151,7 +148,7 @@ static void gui_subMenuSettings() {
     (bool *)&gOptions.freecam.swapRollYaw);
 }
 
-void gui_windowMain() {
+void hscUIWindowMain() {
   ImGuiIO &io = ImGui::GetIO();
   (void)io;
 
@@ -167,7 +164,7 @@ void gui_windowMain() {
     ;//gState.resetPosFlag = 1;
   ImGui::Combo("Use mode", &gState.cameraMode, MODES, IM_ARRAYSIZE(MODES));
   ImGui::Checkbox("No UI", (bool *)&gState.noOriginalUi);
-  gui_displayTips(
+  hscUIShowTips(
     "Hide the original camera UI. Please adjust the parameters before select"
     "this item.",
     1);
@@ -175,28 +172,28 @@ void gui_windowMain() {
   if (ImGui::BeginTabBar("Mode select")) {
     if (ImGui::BeginTabItem("Static")) {
       gState.majorMode = MM_STATIC;
-      gui_subMenuStatic();
+      hscUIMenuStatic();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Dynamic")) {
       gState.majorMode = MM_DYNAMIC;
-      gui_subMenuDynamic();
+      hscUIMenuDynamic();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Animation")) {
       gState.majorMode = MM_ANIMATION;
-      gui_subMenuAnim();
+      hscUIMenuAnim();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Settings")) {
-      gui_subMenuSettings();
+      hscUIMenuSettings();
       ImGui::EndTabItem();
     }
     if (ImGui::BeginTabItem("Abouts")) {
       ImGui::Text("hSC Plugin v" HSC_VERSION " by HTMonkeyG");
       ImGui::Text("A camera plugin developed for Sky:CotL.");
 #ifdef HTML_VERSION_NAME
-      ImGui::Text("Based on HTModLoader v" HTML_VERSION_NAME ".");
+      ImGui::Text("Compiled on HTModLoader SDK v" HTML_VERSION_NAME ".");
 #endif
       ImGui::TextLinkOpenURL(
         "<https://www.github.com/HTMonkeyG/hSC>",

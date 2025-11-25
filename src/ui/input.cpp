@@ -4,8 +4,9 @@
 #include "ui/ui.h"
 
 v4f gMouseDeltaPx = {0};
+KeyBindings_t gBindedKeys;
 
-static void gui_inputStatic() {
+static void inputStaticMode() {
   v4f r = v4fnew(0.0f, 0.0f, 0.0f, 0.0f)
     , s = v4fnew(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -35,7 +36,7 @@ static void gui_inputStatic() {
   gState.facingInput = s;
 }
 
-static void gui_inputDynamic() {
+static void inputDynamicMode() {
   v4f r = v4fnew(0.0f, 0.0f, 0.0f, 0.0f)
     , s = v4fnew(0.0f, 0.0f, 0.0f, 0.0f);
 
@@ -59,14 +60,14 @@ static void gui_inputDynamic() {
   gState.facingInput = s;
 }
 
-void gui_handleInput() {
+void hscInputHandler() {
   if (gState.majorMode == MM_STATIC)
-    gui_inputStatic();
+    inputStaticMode();
   if (gState.majorMode == MM_DYNAMIC)
-    gui_inputDynamic();
+    inputDynamicMode();
 }
 
-v4f gui_getFacingDeltaRad() {
+v4f hscGetFacingDeltaRad() {
   v4f result = gMouseDeltaPx;
 
   // About 16000px per 360 degree when the sensitivity is 1.

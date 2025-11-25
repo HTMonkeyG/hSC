@@ -2,6 +2,6 @@
 #include "internal.h"
 
 // TODO: Implement camera commands and animation calculations.
-void preupdateAnim(MainCamera *) {
+void hscPreupdateAnim(MainCamera *) {
   ;
 }

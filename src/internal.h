@@ -13,34 +13,13 @@
 
 #define HSC_VERSION "0.4.0"
 
+#if HTML_VERSION < 10801
+#error "HTML SDK version must >= v1.8.1"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-//-----------------------------------------------------------------------------
-// [SECTION] Globals.
-//-----------------------------------------------------------------------------
-
-typedef union {
-  struct {
-    HTHandle menu;
-    HTHandle foward;
-    HTHandle backward;
-    HTHandle left;
-    HTHandle right;
-    HTHandle up;
-    HTHandle down;
-    HTHandle rollLeft;
-    HTHandle rollRight;
-  };
-  HTHandle keys[9];
-} KeyBindings_t;
-
-extern LPVOID gameBaseAddr;
-extern HMODULE hModuleDll;
-extern KeyBindings_t gBindedKeys;
-extern char gIniPath[260];
-extern wchar_t gPrefPath[260];
 
 //-----------------------------------------------------------------------------
 // [SECTION] Type definitions.
@@ -123,12 +102,12 @@ typedef struct {
 } MainCameraContext;
 
 // The parent class of all possible camera updates.
-typedef struct MainCamera {
+typedef struct MainCamera_ {
   u64 *lpVtbl;
   u64 unk_1;
   u64 unk_2;
-  struct MainCamera *prev;
-  struct MainCamera *next;
+  struct MainCamera_ *prev;
+  struct MainCamera_ *next;
   u64 unk_3;
   MainCameraContext context1;
   MainCameraContext context2;
@@ -137,6 +116,8 @@ typedef struct MainCamera {
 
 // The size of the following two structs is incorrect. This definition only
 // contains components what we need.
+
+// The states of the default camera of the player.
 typedef struct {
   MainCamera super;
   char unk_1[56];
@@ -144,6 +125,7 @@ typedef struct {
   char unk_2[1456];
 } WhiskerCamera;
 
+// The status of camera of the players's camera accessory.
 typedef struct {
   MainCamera super;
   void *prop;
@@ -155,11 +137,100 @@ typedef struct {
 
 #define SkyCamera_getPropPtr(sc) ((SkyCameraProp *)((i08 *)(((SkyCamera *)(sc))->prop) - 0x88))
 
+// The return value of World::interactionTest().
 typedef struct {
+  // Intersection point.
   v4f intersection;
-  v4f normalize;
+  // Normal vector.
+  v4f normal;
   i08 unk[0x40];
 } InteractionResult;
+
+//-----------------------------------------------------------------------------
+// [SECTION] hSC internal status structures.
+//-----------------------------------------------------------------------------
+
+typedef struct {
+  f32 fov;
+  f32 gamma;
+  f32 blur;
+  m44 matrix;
+} HscSnapshot;
+
+typedef struct {
+  // General controller.
+  // Deciding whether to take over the camera.
+  i08 enable;
+  // Deciding whether to display the camera UI.
+  i08 noOriginalUi;
+  // Deciding on how to take over camera operations.
+  i32 majorMode;
+  // Deciding which camera mode to take over.
+  i32 cameraMode;
+  // Deciding whether to reset camera coordinates for the next frame.
+  i08 resetPosFlag;
+
+  // Inputs.
+  v4f movementInput;
+  v4f facingInput;
+
+  // Camera parameters.
+  // Position.
+  v4f pos;
+  // Rotation in radians, for internal calculations.
+  v4f rot;
+  // Rotation in degrees, only for user operation.
+  v4f rotDeg;
+  // Adjustable parameters during normal gaming, not avaliable on OM_WHISKER.
+  f32 scale;
+  f32 focus;
+  f32 brightness;
+
+  // Camera static parameters override.
+  i08 overridePos;
+  i08 overrideDir;
+  i08 overrideFocus;
+  i08 overrideScale;
+  i08 overrideBrightness;
+
+  // Freecam datas.
+  f32 freecamSpeed;
+  f32 freecamRotateSpeed;
+  i08 freecamCollision;
+  i08 freecamLockPosition;
+  i08 freecamLockRotation;
+
+  // FPV datas.
+  i32 fpvMode;
+
+  // Pre-calculated rotation matrix and pos.
+  i08 useMatrix;
+  i08 usePos;
+  v4f mat[4];
+} HscContext;
+
+//-----------------------------------------------------------------------------
+// [SECTION] Globals.
+//-----------------------------------------------------------------------------
+
+// Key bindings.
+typedef union {
+  struct {
+    HTHandle menu;
+    HTHandle foward;
+    HTHandle backward;
+    HTHandle left;
+    HTHandle right;
+    HTHandle up;
+    HTHandle down;
+    HTHandle rollLeft;
+    HTHandle rollRight;
+  };
+  HTHandle keys[9];
+} KeyBindings_t;
+
+extern HMODULE hModuleDll;
+extern KeyBindings_t gBindedKeys;
 
 //-----------------------------------------------------------------------------
 // [SECTION] Log implementations of hSC.
@@ -213,7 +284,7 @@ typedef union {
 
   // Array of functions.
   void *functions[9];
-} SetupFunctions_t;
+} FuncAddresses;
 
 typedef struct {
   HTAsmSig s;
@@ -222,37 +293,35 @@ typedef struct {
 
 extern const NamedSig *const RequiredFn[REQUIRED_FUNC_COUNT];
 
-i08 setupFuncWithSig(
-  SetupFunctions_t *functions);
-i08 setupPaths(
-  HMODULE hModule, wchar_t *prefPath);
+i08 hscSetupFuncWithSig(
+  FuncAddresses *functions);
 
 //-----------------------------------------------------------------------------
 // [SECTION] Hook installer and hooked function type declarations.
 //-----------------------------------------------------------------------------
 
 // Typedefs of trampoline functions.
-typedef u64 (__fastcall *FnSkyCameraProp_update)(SkyCameraProp *, u64);
-typedef u64 (__fastcall *FnSkyCameraProp__updateParams)(SkyCameraProp *, u64);
-typedef u64 (__fastcall *FnSkyCameraProp_updateUI)(
+typedef u64 (__fastcall *PFN_SkyCameraProp_update)(SkyCameraProp *, u64);
+typedef u64 (__fastcall *PFN_SkyCameraProp__updateParams)(SkyCameraProp *, u64);
+typedef u64 (__fastcall *PFN_SkyCameraProp_updateUI)(
   SkyCameraProp *, u64, u64, u64, f32 *, f32 *, f32 *, u64, i08);
-typedef u64 (__fastcall *FnWorld_interactionTest)(
+typedef u64 (__fastcall *PFN_World_interactionTest)(
   u64, v4f *, v4f *, float, v4f *, i08 *);
-typedef u64 (__fastcall *FnWhiskerCamera_update)(
+typedef u64 (__fastcall *PFN_WhiskerCamera_update)(
   WhiskerCamera *, u64 *);
-typedef u64 (__fastcall *FnSkyCamera_update)(
+typedef u64 (__fastcall *PFN_SkyCamera_update)(
   SkyCamera *, u64 *);
-typedef u64 (__fastcall *FnMainCamera__getDelta)(
+typedef u64 (__fastcall *PFN_MainCamera__getDelta)(
   u64, i08 *, u64, u64, u64, int, int);
-typedef u64 (__fastcall *FnInput_getMouseDeltaPx)(
+typedef u64 (__fastcall *PFN_Input_getMouseDeltaPx)(
   u64, v4f *);
 
 extern u64 gSavedLevelContext;
-extern SetupFunctions_t gTramp;
+extern FuncAddresses gTramp;
 
-i08 initAllHooks();
-i08 createAllHooks();
-i08 removeAllHooks();
+i08 hscInitAllHooks();
+i08 hscCreateAllHooks();
+i08 hscRemoveAllHooks();
 
 //-----------------------------------------------------------------------------
 // [SECTION] Camera updater of hSC.
@@ -269,13 +338,13 @@ typedef struct {
 // Unused. Inject our camera in the game's camera system.
 extern InjectCamera gInjectCamera;
 
-void preupdateStatic(MainCamera *);
-void preupdateDynamic(MainCamera *);
-void preupdateAnim(MainCamera *);
+void hscPreupdateStatic(MainCamera *);
+void hscPreupdateDynamic(MainCamera *);
+void hscPreupdateAnim(MainCamera *);
 
-void updatePropMain(SkyCameraProp *);
-void preupdateCameraMain(MainCamera *);
-void updateCameraMain(MainCamera *);
+void hscUpdatePropMain(SkyCameraProp *);
+void hscPreupdateCameraMain(MainCamera *);
+void hscUpdateCameraMain(MainCamera *);
 
 #ifdef __cplusplus
 }

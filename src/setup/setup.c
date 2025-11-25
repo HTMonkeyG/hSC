@@ -111,8 +111,8 @@ const NamedSig *const RequiredFn[REQUIRED_FUNC_COUNT] = {
   &sigE8_Input_getMouseDeltaPx
 };
 
-i08 setupFuncWithSig(
-  SetupFunctions_t *functions
+i08 hscSetupFuncWithSig(
+  FuncAddresses *functions
 ) {
   i08 r = 1;
   i32 length;
@@ -140,27 +140,4 @@ i08 setupFuncWithSig(
   }
   
   return r;
-}
-
-i08 setupPaths(
-  HMODULE hModule,
-  wchar_t *prefPath
-) {
-  wchar_t dllPath[MAX_PATH]
-    , *p;
-  u32 len;
-
-  len = GetModuleFileNameW(hModule, dllPath, MAX_PATH);
-  if (!len || len >= MAX_PATH)
-    return 0;
-  p = wcsrchr(dllPath, L'\\');
-  if (!p)
-    return 0;
-  *p = 0;
-
-  // History and preference data of hSC.
-  wcscpy_s(prefPath, MAX_PATH, dllPath);
-  wcscat_s(prefPath, MAX_PATH, L"\\.hsc-data");
-
-  return 1;
 }

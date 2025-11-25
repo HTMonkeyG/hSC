@@ -79,8 +79,8 @@ __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
   }
 
   // Create all hooks.
-  initAllHooks();
-  createAllHooks();
+  hscInitAllHooks();
+  hscCreateAllHooks();
 
   return HT_SUCCESS;
 }
@@ -97,11 +97,11 @@ __declspec(dllexport) void HTMLAPI HTModRenderGui(
 ) {
   // Draw menus.
   if (gGui.isOpen)
-    gui_windowMain();
+    hscUIWindowMain();
 
   // Handle keyboard input.
   if (gState.enable)
-    gui_handleInput();
+    hscInputHandler();
 }
 
 #endif

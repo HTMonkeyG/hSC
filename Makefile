@@ -28,20 +28,17 @@ CFLAGS += -I./src
 CFLAGS += -I./libraries/htmodloader/includes/imgui-1.92.2b -I./libraries/htmodloader/includes/imgui-1.92.2b/backends
 # Include HTML.
 CFLAGS += -I./libraries/htmodloader/includes/htmodloader
-# Include MinHook.
-CFLAGS += -I./libraries/MinHook/include
-# Macros.
-CFLAGS += -DNDEBUG -DUSE_HTML
 
 LFLAGS = -Wl,--gc-sections,-O3,--as-needed,--version-script=$(VERSION_SCRIPT)
-LFLAGS += -lgdi32 -ldwmapi -ld3dcompiler -lstdc++
+LFLAGS += -lstdc++
 LFLAGS += -L./libraries/htmodloader/lib -lhtmodloader
-LFLAGS += -L./libraries/MinHook -lMinHook
 
 vpath %.c $(SRC_DIRS)
 vpath %.cpp $(SRC_DIRS)
 
 .PHONY: all clean libs clean_libs clean_all
+
+all: $(BIN_TARGET)
 
 $(BIN_TARGET): $(C_OBJ) $(CPP_OBJ)
 	@echo Linking ...
@@ -56,18 +53,6 @@ $(DIST_DIR)/%.o: %.cpp
 	@echo Compiling file "$<" ...
 	@$(CXX) $(CFLAGS) -c $< -o $@
 
-clean_all: clean_libs clean
-
 clean:
 	-@del .\dist\*.o
 	-@del .\dist\*.dll
-
-all: libs
-	-@$(MAKE) $(BIN_TARGET)
-
-libs:
-	@echo Compiling libraries ...
-	-@$(MAKE) -s -C ./libraries/MinHook libMinHook.a
-
-clean_libs:
-	-@$(MAKE) -s -C ./libraries/MinHook clean

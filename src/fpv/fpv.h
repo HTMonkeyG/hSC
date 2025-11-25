@@ -11,9 +11,9 @@ extern "C" {
 #define FPVRST_ROT (0x02)
 
 // The type of the fpv update functions must match the definition below.
-typedef i08 (__fastcall *FnFpvUpdate)(
+typedef i08 (__fastcall *PFN_FpvUpdate)(
   v4f mDelta, v4f fDelta, f32 timeElapsed);
-typedef i08 (__fastcall *FnFpvReset)(
+typedef i08 (__fastcall *PFN_FpvReset)(
   v4f pos, v4f rot, i32 flags);
 
 typedef struct {

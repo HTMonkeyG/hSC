@@ -101,26 +101,18 @@ extern GUIState_t gState;
 extern GUIOptions_t gOptions;
 extern v4f gMouseDeltaPx;
 
-static inline void setRotDegree(v4f rotRadians) {
-  gState.rotDeg = v4fscale(rotRadians, 180.0f / PI_F);
-  gState.rotDeg.x = fmodf(gState.rotDeg.x, 360.0f);
-  gState.rotDeg.z = fmodf(gState.rotDeg.z, 360.0f);
-  gState.rotDeg.y = m_clamp(gState.rotDeg.y, -89.75f, 89.75f);
-}
-
-void gui_displayTips(const char *desc, i08 sameLine);
-void gui_windowMain();
+void hscUIShowTips(
+  const char *desc, i08 sameLine);
+void hscUIWindowMain();
 
 /**
  * Handle keyboard and mouse inputs.
  */
-void gui_handleInput();
+void hscInputHandler();
 /**
  * Convert mouse movement to radians.
  */
-v4f gui_getFacingDeltaRad();
-
-void gui_initInputs();
+v4f hscGetFacingDeltaRad();
 
 #ifdef __cplusplus
 }

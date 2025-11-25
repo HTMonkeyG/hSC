@@ -9,7 +9,7 @@
  * 
  * NOTE: This function must ONLY execute ONCE in every frame.
  */
-void preupdateCameraMain(MainCamera *this) {
+void hscPreupdateCameraMain(MainCamera *this) {
   i64 qpc, inteval;
 
   // Calculate time elapsed since last frame.
@@ -28,18 +28,17 @@ void preupdateCameraMain(MainCamera *this) {
   gState.useMatrix = gState.usePos = 0;
 
   if (gState.majorMode == MM_STATIC)
-    preupdateStatic(this);
+    hscPreupdateStatic(this);
   else if (gState.majorMode == MM_DYNAMIC)
-    preupdateDynamic(this);
+    hscPreupdateDynamic(this);
   else if (gState.majorMode == MM_ANIMATION)
-    preupdateAnim(this);
+    hscPreupdateAnim(this);
 }
-
 
 /**
  * Copy calculated rotation matrix and position vector.
  */
-void updateCameraMain(MainCamera *this) {
+void hscUpdateCameraMain(MainCamera *this) {
   if (!gState.enable)
     return;
 
