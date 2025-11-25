@@ -23,18 +23,16 @@
 &emsp;&emsp;同时该模式可以使用wasd、空格、shift自由移动镜头，使用Speed输入框调整移动速度。<br>
 &emsp;&emsp;该模式适用于静态拍摄等情况。
 
-### 1.2 灵魂出窍模式
-**该模式未完全迁移，暂时无法使用。**
+### 1.2 动态模式
+**该模式开发中，所有描述无法保证稳定性与兼容性**
 
 &emsp;&emsp;~~该模式中可以使用wasd与鼠标模拟操作无人机进行拍摄。~~
 
-### 1.3 无人机模式
-**该模式开发中，所有描述无法保证稳定性与兼容性**
-
+### 1.3 关键帧模式
 &emsp;&emsp;~~该模式中可以编辑运镜关键帧。~~
 
 ## 二、使用方式
-1. 下载并安装版本大于等于v1.5.0的[HTModLoader](https://github.com/HTMonkeyG/HTML-Sky/releases/latest)。
+1. 下载并安装版本大于等于v1.8.1的[HTModLoader](https://github.com/HTMonkeyG/HTML-Sky/releases/latest)。
 2. 下载仓库release界面下的最新版.zip文件。
 3. 将解压出的`hsc-main.dll`与`manifest.json`放置于`htmodloader/mods`下的文件夹内。存放hSC的文件夹可为任意名称，例如：
 ```
@@ -50,9 +48,7 @@
 4. 重启游戏。
 
 ## 三、编译方式
-&emsp;&emsp;本软件使用mingw64-15.1.0编译。下载仓库release界面下对应版本的Source Code (.zip)，解压后在Makefile同目录下新建名为dist的文件夹，运行`mingw32-make.exe`即可。首次编译需运行`mingw32-make.exe all`编译库文件。<br>
-&emsp;&emsp;本软件不保证可在其他版本的MinGW上正常编译，或在低于Win10 22H2、高于Win11 24H2的操作系统上正常运行。如有兼容性问题请通过邮件联系。<br>
-&emsp;&emsp;本软件使用的MinHook经过修改以解决可能由光遇国服的VMP保护导致的hook失败，ImGui经过修改以允许在更新的MinGW SDK下编译。<br>
+&emsp;&emsp;本软件使用mingw64-15.1.0编译。下载仓库release界面下对应版本的Source Code (.zip)，解压后在Makefile同目录下新建名为dist的文件夹，运行`mingw32-make.exe`即可。<br>
 &emsp;&emsp;**请勿使用非仓库内提供的第三方库版本。**
 
 ## 四、额外许可声明
