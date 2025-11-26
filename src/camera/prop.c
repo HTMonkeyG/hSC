@@ -1,12 +1,21 @@
 #include "ui/ui.h"
 #include "internal.h"
 
-#define OVERRIDE_2(cond, v1, v2) ((cond) ? ((v1) = (v2)) : ((v2) = (v1)))
-#define OVERRIDE_3(cond, v11, v12, v2) ((cond) ? ((v11) = ((v12) = (v2))) : ((v2) = (v11)))
-
 // ----------------------------------------------------------------------------
 // [SECTION] Camera prop update functions.
 // ----------------------------------------------------------------------------
+
+static inline void overrideOrCopy(
+  i08 condition,
+  f32 *dest1,
+  f32 *dest2,
+  f32 *src
+) {
+  if (condition)
+    *dest1 = *dest2 = *src;
+  else
+    *src = *dest1;
+}
 
 static void updatePropStatic(SkyCameraProp *this) {
   // We don't override camera pos in SkyCameraProp to prevent the camera from
@@ -19,28 +28,32 @@ static void updatePropStatic(SkyCameraProp *this) {
   }
 
   // Override or copy camera params.
-  OVERRIDE_3(
+  overrideOrCopy(
     gState.overrideScale,
-    this->scaleAnim,
-    this->scale,
-    gState.scale);
-  OVERRIDE_3(
+    &this->scaleAnim,
+    &this->scale,
+    &gState.scale);
+  overrideOrCopy(
     gState.overrideFocus,
-    this->focusAnim,
-    this->focus,
-    gState.focus);
-  OVERRIDE_3(
+    &this->focusAnim,
+    &this->focus,
+    &gState.focus);
+  overrideOrCopy(
     gState.overrideBrightness,
-    this->brightnessAnim,
-    this->brightness,
-    gState.brightness);
+    &this->brightnessAnim,
+    &this->brightness,
+    &gState.brightness);
 }
 
-static void updatePropDynamic(SkyCameraProp *this) {
+static void updatePropDynamic(
+  SkyCameraProp *this
+) {
   ;
 }
 
-static void updatePropAnim(SkyCameraProp *this) {
+static void updatePropAnim(
+  SkyCameraProp *this
+) {
   ;
 }
 
