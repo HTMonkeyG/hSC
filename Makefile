@@ -22,7 +22,7 @@ CXX = g++
 
 # Params.
 CFLAGS = -O3 -ffunction-sections -fdata-sections -static -flto=auto -s -mavx -msse
-CFLAGS += -Wall -Wformat -Wno-unused-const-variable -Wno-unused-function
+CFLAGS += -Wall -Wformat -Wno-unused-const-variable -Wno-unused-function -Wno-missing-braces
 CFLAGS += -I./src
 # Include ImGui.
 CFLAGS += -I./libraries/htmodloader/includes/imgui-1.92.2b -I./libraries/htmodloader/includes/imgui-1.92.2b/backends

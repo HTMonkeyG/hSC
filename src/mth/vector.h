@@ -9,64 +9,61 @@
 extern "C" {
 #endif
 
-#define v2f V2F
-#define v3f V3F
 #define v4f V4F
-#define v2d V2D
-#define v3d V3D
-#define v4d V4D
 
-typedef struct {
-  f32 x;
-  f32 y;
-} V2F;
-
-typedef struct {
-  f32 x;
-  f32 y;
-  f32 z;
-} V3F;
-
-typedef struct {
-  f32 x;
-  f32 y;
-  f32 z;
-  f32 w;
+typedef union {
+  f32 n[4];
+  __m128 m128;
+  struct {
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 w;
+  };
 } V4F;
-
-typedef struct {
-  f64 x;
-  f64 y;
-} V2D;
-
-typedef struct {
-  f64 x;
-  f64 y;
-  f64 z;
-} V3D;
-
-typedef struct {
-  f64 x;
-  f64 y;
-  f64 z;
-  f64 w;
-} V4D;
 
 static const v4f V4FZERO = {0};
 
-static inline v4f v4fnew(f32 x, f32 y, f32 z, f32 w);
-static inline v4f v4fadd(v4f a, v4f b);
-static inline v4f v4fsub(v4f a, v4f b);
-static inline v4f v4fmul(v4f a, v4f b);
-static inline v4f v4fdiv(v4f a, v4f b);
-static inline v4f v4fscale(v4f a, f32 s);
-static inline v4f v4fnormalize(v4f a);
-static inline v4f v4freflect(v4f n, v4f i);
-static inline v4f v4fprojection(v4f a, v4f b);
-static inline f32 v4fdot(v4f a, v4f b);
-static inline f32 v4flen(v4f a);
+static inline v4f v4fnew(
+  f32 x,
+  f32 y,
+  f32 z,
+  f32 w);
+static inline v4f v4fadd(
+  v4f a,
+  v4f b);
+static inline v4f v4fsub(
+  v4f a,
+  v4f b);
+static inline v4f v4fmul(
+  v4f a,
+  v4f b);
+static inline v4f v4fdiv(
+  v4f a,
+  v4f b);
+static inline v4f v4fscale(
+  v4f a,
+  f32 s);
+static inline v4f v4fnormalize(
+  v4f a);
+static inline v4f v4freflect(
+  v4f n,
+  v4f i);
+static inline v4f v4fprojection(
+  v4f a,
+  v4f b);
+static inline f32 v4fdot(
+  v4f a,
+  v4f b);
+static inline f32 v4flen(
+  v4f a);
 
-static inline v4f v4fnew(f32 x, f32 y, f32 z, f32 w) {
+static inline v4f v4fnew(
+  f32 x,
+  f32 y,
+  f32 z,
+  f32 w
+) {
   v4f r;
 
   r.x = x;
@@ -84,17 +81,12 @@ static inline v4f v4fnew(f32 x, f32 y, f32 z, f32 w) {
  * @param b
  * @returns
  */
-static inline v4f v4fadd(v4f a, v4f b) {
-  __m128 v1, v2;
+static inline v4f v4fadd(
+  v4f a,
+  v4f b
+) {
   v4f r;
-
-  v1 = _mm_loadu_ps((float *)&a);
-  v2 = _mm_loadu_ps((float *)&b);
-
-  v1 = _mm_add_ps(v1, v2);
-
-  _mm_storeu_ps((float *)&r, v1);
-
+  r.m128 = _mm_add_ps(a.m128, b.m128);
   return r;
 }
 
@@ -105,17 +97,12 @@ static inline v4f v4fadd(v4f a, v4f b) {
  * @param b
  * @returns
  */
-static inline v4f v4fsub(v4f a, v4f b) {
-  __m128 v1, v2;
+static inline v4f v4fsub(
+  v4f a,
+  v4f b
+) {
   v4f r;
-
-  v1 = _mm_loadu_ps((float *)&a);
-  v2 = _mm_loadu_ps((float *)&b);
-
-  v1 = _mm_sub_ps(v1, v2);
-
-  _mm_storeu_ps((float *)&r, v1);
-
+  r.m128 = _mm_sub_ps(a.m128, b.m128);
   return r;
 }
 
@@ -126,17 +113,12 @@ static inline v4f v4fsub(v4f a, v4f b) {
  * @param b
  * @returns
  */
-static inline v4f v4fmul(v4f a, v4f b) {
-  __m128 v1, v2;
+static inline v4f v4fmul(
+  v4f a,
+  v4f b
+) {
   v4f r;
-
-  v1 = _mm_loadu_ps((float *)&a);
-  v2 = _mm_loadu_ps((float *)&b);
-
-  v1 = _mm_mul_ps(v1, v2);
-
-  _mm_storeu_ps((float *)&r, v1);
-
+  r.m128 = _mm_mul_ps(a.m128, b.m128);
   return r;
 }
 
@@ -147,17 +129,12 @@ static inline v4f v4fmul(v4f a, v4f b) {
  * @param b
  * @returns
  */
-static inline v4f v4fdiv(v4f a, v4f b) {
-  __m128 v1, v2;
+static inline v4f v4fdiv(
+  v4f a,
+  v4f b
+) {
   v4f r;
-
-  v1 = _mm_loadu_ps((float *)&a);
-  v2 = _mm_loadu_ps((float *)&b);
-
-  v1 = _mm_div_ps(v1, v2);
-
-  _mm_storeu_ps((float *)&r, v1);
-
+  r.m128 = _mm_div_ps(a.m128, b.m128);
   return r;
 }
 
@@ -168,16 +145,15 @@ static inline v4f v4fdiv(v4f a, v4f b) {
  * @param s
  * @returns
  */
-static inline v4f v4fscale(v4f a, f32 s) {
-  __m128 v1, v2;
+static inline v4f v4fscale(
+  v4f a,
+  f32 s
+) {
+  __m128 v1;
   v4f r;
 
-  v1 = _mm_loadu_ps((float *)&a);
-
-  v2 = _mm_set1_ps(s);
-  v1 = _mm_mul_ps(v1, v2);
-
-  _mm_storeu_ps((float *)&r, v1);
+  v1 = _mm_set1_ps(s);
+  r.m128 = _mm_mul_ps(a.m128, v1);
 
   return r;
 }
@@ -188,7 +164,9 @@ static inline v4f v4fscale(v4f a, f32 s) {
  * @param a
  * @returns
  */
-static inline v4f v4fnormalize(v4f a) {
+static inline v4f v4fnormalize(
+  v4f a
+) {
   float l = v4flen(a);
 
   if (l > 0)
@@ -203,8 +181,10 @@ static inline v4f v4fnormalize(v4f a) {
  * @param a
  * @returns
  */
-static inline v4f v4fabs(v4f a) {
-  __m128 v1, vMask;
+static inline v4f v4fabs(
+  v4f a
+) {
+  __m128 vMask;
   v4f r;
   static const u32 mask[4] = {
     0x7FFFFFFF,
@@ -213,12 +193,8 @@ static inline v4f v4fabs(v4f a) {
     0x7FFFFFFF
   };
 
-  v1 = _mm_loadu_ps((float *)&a);
   vMask = _mm_loadu_ps((float *)mask);
-
-  v1 = _mm_and_ps(v1, vMask);
-
-  _mm_storeu_ps((float *)&r, v1);
+  r.m128 = _mm_and_ps(a.m128, vMask);
 
   return r;
 }
@@ -229,24 +205,25 @@ static inline v4f v4fabs(v4f a) {
  * @param n Normalize vector.
  * @param i Incident vector.
  */
-static inline v4f v4freflect(v4f n, v4f i) {
-  __m128 v1, v2, v3;
+static inline v4f v4freflect(
+  v4f n,
+  v4f i
+) {
+  __m128 v1;
   v4f r;
 
   n = v4fnormalize(n);
-  v1 = _mm_loadu_ps((float *)&n);
-  v2 = _mm_loadu_ps((float *)&i);
 
   // dot(i, n)
-  v3 = _mm_dp_ps(v1, v2, 0xFF);
+  v1 = _mm_dp_ps(i.m128, n.m128, 0xFF);
   // 2.0f * dot(i, n)
-  v3 = _mm_mul_ps(v3, _mm_set1_ps(2.0f));
+  v1 = _mm_mul_ps(v1, _mm_set1_ps(2.0f));
   // scale * n
-  v3 = _mm_mul_ps(v3, v1);
+  v1 = _mm_mul_ps(v1, n.m128);
   // i - scaled_n
-  v3 = _mm_sub_ps(v2, v3);
+  v1 = _mm_sub_ps(i.m128, v1);
 
-  _mm_storeu_ps((float *)&r, v3);
+  r.m128 = v1;
   return r;
 }
 /**
@@ -255,12 +232,15 @@ static inline v4f v4freflect(v4f n, v4f i) {
  * @param a
  * @param b
  */
-static inline v4f v4fprojection(v4f a, v4f b) {
+static inline v4f v4fprojection(
+  v4f a,
+  v4f b
+) {
   __m128 v1, v2, v3, zero, mask, scale;
   v4f r;
 
-  v1 = _mm_loadu_ps((float *)&a);
-  v2 = _mm_loadu_ps((float *)&b);
+  v1 = a.m128;
+  v2 = b.m128;
 
   // dot(a, b)
   v1 = _mm_dp_ps(v1, v2, 0xFF);
@@ -275,7 +255,7 @@ static inline v4f v4fprojection(v4f a, v4f b) {
   // Scale b.
   v1 = _mm_mul_ps(scale, v2);
 
-  _mm_storeu_ps((float *)&r, v1);
+  r.m128 = v1;
 
   return r;
 }
@@ -288,13 +268,17 @@ static inline v4f v4fprojection(v4f a, v4f b) {
  * @param a
  * @param b
  */
-static inline v4f v4fseleq(v4f x, v4f a, v4f b) {
+static inline v4f v4fseleq(
+  v4f x,
+  v4f a,
+  v4f b
+) {
   v4f r;
   __m128 v1, v2, v3, mask;
 
-  v1 = _mm_loadu_ps((float *)&x);
-  v2 = _mm_loadu_ps((float *)&a);
-  v3 = _mm_loadu_ps((float *)&b);
+  v1 = x.m128;
+  v2 = a.m128;
+  v3 = b.m128;
 
   mask = _mm_cmpneq_ps(v1, _mm_setzero_ps());
 
@@ -302,7 +286,7 @@ static inline v4f v4fseleq(v4f x, v4f a, v4f b) {
     _mm_and_ps(mask, v2),
     _mm_andnot_ps(mask, v3)
   );
-  _mm_storeu_ps((float *)&r, v1);
+  r.m128 = v1;
 
   return r;
 }
@@ -319,9 +303,9 @@ static inline v4f v4fselgt(v4f x, v4f a, v4f b) {
   v4f r;
   __m128 v1, v2, v3, mask;
 
-  v1 = _mm_loadu_ps((float *)&x);
-  v2 = _mm_loadu_ps((float *)&a);
-  v3 = _mm_loadu_ps((float *)&b);
+  v1 = x.m128;
+  v2 = a.m128;
+  v3 = b.m128;
 
   mask = _mm_cmpgt_ps(v1, _mm_setzero_ps());
     
@@ -329,7 +313,7 @@ static inline v4f v4fselgt(v4f x, v4f a, v4f b) {
     _mm_and_ps(mask, v2),
     _mm_andnot_ps(mask, v3)
   );
-  _mm_storeu_ps((float *)&r, v1);
+  r.m128 = v1;
 
   return r;
 }
@@ -341,14 +325,12 @@ static inline v4f v4fselgt(v4f x, v4f a, v4f b) {
  * @param b
  * @returns
  */
-static inline f32 v4fdot(v4f a, v4f b) {
-  __m128 v1, v2;
-
-  v1 = _mm_loadu_ps((float *)&a);
-  v2 = _mm_loadu_ps((float *)&b);
-
-  v1 = _mm_dp_ps(v1, v2, 0xFF);
-
+static inline f32 v4fdot(
+  v4f a,
+  v4f b
+) {
+  __m128 v1;
+  v1 = _mm_dp_ps(a.m128, b.m128, 0xFF);
   return _mm_cvtss_f32(v1);
 }
 
@@ -358,10 +340,12 @@ static inline f32 v4fdot(v4f a, v4f b) {
  * @param a
  * @returns
  */
-static inline f32 v4flen(v4f a) {
+static inline f32 v4flen(
+  v4f a
+) {
   __m128 v1, v2;
 
-  v1 = _mm_loadu_ps((float *)&a);
+  v1 = a.m128;
   // Square each components.
   v1 = _mm_mul_ps(v1, v1);
   // Copy the first and the third component.
