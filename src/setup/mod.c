@@ -1,5 +1,3 @@
-#ifdef USE_HTML
-
 #include "includes/htmod.h"
 #include "ui/ui.h"
 #include "internal.h"
@@ -103,5 +101,3 @@ __declspec(dllexport) void HTMLAPI HTModRenderGui(
   if (gState.enable)
     hscInputHandler();
 }
-
-#endif

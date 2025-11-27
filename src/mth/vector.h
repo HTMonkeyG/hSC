@@ -261,6 +261,32 @@ static inline v4f v4fprojection(
 }
 
 /**
+ * Performs an element-by-element blending with the given mask. Only the
+ * lowest 4 bit of the mask is used.
+ * 
+ * @param a
+ * @param b
+ * @param mask
+ */
+static inline v4f v4fblend(
+  v4f a,
+  v4f b,
+  i32 mask
+) {
+  v4f r;
+  __m128 v1 = _mm_setr_ps(
+    (mask & 0x1) ? -0.0f : 0.0f,
+    (mask & 0x2) ? -0.0f : 0.0f,
+    (mask & 0x4) ? -0.0f : 0.0f,
+    (mask & 0x8) ? -0.0f : 0.0f
+  );
+
+  r.m128 = _mm_blendv_ps(a.m128, b.m128, v1);
+
+  return r;
+}
+
+/**
  * When the component of vector x is not 0, select the corresponding component
  * of a, otherwise select b.
  * 

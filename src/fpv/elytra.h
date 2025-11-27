@@ -17,16 +17,19 @@ extern "C" {
 #endif
 
 /** Import the struct. */
-extern FPV_t gElytra;
+extern HscFpv gElytra;
 
 /**
- * Initialize the FPV_t struct.
+ * Initialize the HscFpv struct.
  * 
  * @param pos Initial camera pos.
  * @param rot Initial camera rotation.
  * @param flags Customized initialize flags.
  */
-FPV_t *fpvElytra_init(v4f pos, v4f rot, i32 flags);
+HscFpv *hscFpvElytraInit(
+  v4f pos,
+  v4f rot,
+  i32 flags);
 
 /**
  * Minecraft's elytra physics, reproduce from the description in Chinese
@@ -42,21 +45,26 @@ FPV_t *fpvElytra_init(v4f pos, v4f rot, i32 flags);
  * @param fDelta Rotation delta, in the unit of 'rad'.
  * @param timeElapsed Time elapsed since last frame.
  */
-FPV_t *fpvElytra_update(v4f mDelta, v4f fDelta, f32 timeElapsed);
+HscFpv *hscFpvElytraUpdate(
+  v4f mDelta,
+  v4f fDelta,
+  f32 timeElapsed);
 
 /**
  * Enable or disable barrel roll in elytra mode.
  * 
  * @param enable True to enable.
  */
-void fpvElytra_enableRoll(i08 enable);
+void hscFpvElytraEnableRoll(
+  i08 enable);
 
 /**
  * Enable or disable smooth in elytra mode.
  * 
  * @param enable True to enable.
  */
-void fpvElytra_enableSmooth(i08 enable);
+void hscFpvElytraEnableSmooth(
+  i08 enable);
 
 #ifdef __cplusplus
 }

@@ -3,13 +3,23 @@
 #include "internal.h"
 #include "ui/ui.h"
 
+// Global context of the plugin.
+HscContext gContext;
+
+// The camera status to be updated to the current camera object of the game.
+HscSnapshot gCamera;
+// The avaliable fields in gCamera.
+HscSnapshotIntent gCameraIntent;
+
 /**
  * Get the time elapsed since last frame, and calculate rotation matrix and
  * posision vector.
  * 
  * NOTE: This function must ONLY execute ONCE in every frame.
  */
-void hscPreupdateCameraMain(MainCamera *this) {
+void hscPreupdateCameraMain(
+  MainCamera *this
+) {
   i64 qpc, inteval;
 
   // Calculate time elapsed since last frame.
@@ -25,7 +35,7 @@ void hscPreupdateCameraMain(MainCamera *this) {
   if (!gState.enable)
     return;
 
-  gState.useMatrix = gState.usePos = 0;
+  gCameraIntent.pos = gCameraIntent.rot = 0;
 
   if (gState.majorMode == MM_STATIC)
     hscPreupdateStatic(this);
@@ -38,17 +48,24 @@ void hscPreupdateCameraMain(MainCamera *this) {
 /**
  * Copy calculated rotation matrix and position vector.
  */
-void hscUpdateCameraMain(MainCamera *this) {
+void hscUpdateCameraMain(
+  MainCamera *this
+) {
   if (!gState.enable)
     return;
 
-  if (gState.useMatrix) {
-    this->context1.mat1 = gState.mat[0];
-    this->context1.mat2 = gState.mat[1];
-    this->context1.mat3 = gState.mat[2];
+  hscValidateSnapshot(&gCamera);
+
+  if (gCameraIntent.rot) {
+    memcpy(
+      &this->context1.mat,
+      &gCamera.matrix,
+      3 * sizeof(v4f));
   }
-  if (gState.usePos) {
-    this->context1.cameraPos = gState.mat[3];
-    this->context1.cameraPos.w = 1.0f;
+  if (gCameraIntent.pos) {
+    this->context1.cameraPos = v4fblend(
+      this->context1.cameraPos,
+      gCamera.pos,
+      gCameraIntent.pos);
   }
 }

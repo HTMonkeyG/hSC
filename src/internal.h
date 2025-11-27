@@ -22,7 +22,7 @@ extern "C" {
 #endif
 
 //-----------------------------------------------------------------------------
-// [SECTION] Type definitions.
+// [SECTION] SKY_GAME_TYPES
 //-----------------------------------------------------------------------------
 
 typedef enum {
@@ -89,9 +89,9 @@ typedef struct {
     struct {
       // Rotate matrix (3x3) is stored separately by rows in three vectors. The
       // last component of these vectors is 0.
-      v4f mat1;
-      v4f mat2;
-      v4f mat3;
+      v4f left;
+      v4f up;
+      v4f backward;
       // The last element of this vector is 1. We can consider the four vectors
       // as a single matrix (4x4).
       v4f cameraPos;
@@ -125,7 +125,7 @@ typedef struct {
   char unk_2[1456];
 } WhiskerCamera;
 
-// The status of camera of the players's camera accessory.
+// The camera status of the players's camera accessory.
 typedef struct {
   MainCamera super;
   void *prop;
@@ -147,18 +147,53 @@ typedef struct {
 } InteractionResult;
 
 //-----------------------------------------------------------------------------
-// [SECTION] hSC internal status structures.
+// [SECTION] HSC_GLOBALS
 //-----------------------------------------------------------------------------
 
+// The avaliable fields in a vector.
+typedef i32 HscIndentAxis;
+typedef enum {
+  HscIndentAxis_None = 0,
+
+  HscIndentAxis_X = 1 << 0,
+  HscIndentAxis_Y = 1 << 1,
+  HscIndentAxis_Z = 1 << 2,
+  HscIndentAxis_W = 1 << 3,
+
+  HscIndentAxis_All = 0x0F
+} HscIndentAxis_;
+
+// The avaliable fields of a snapshot.
 typedef struct {
+  HscIndentAxis pos;
+  i08 rot;
+
+  i08 fov;
+  i08 gamma;
+  i08 blur;
+} HscSnapshotIntent;
+
+// Camera status snapshot, for interpolation.
+typedef struct {
+  union {
+    struct {
+      v4f left;
+      v4f up;
+      v4f backward;
+      v4f pos;
+    };
+    m44 matrix;
+  };
+
   f32 fov;
   f32 gamma;
   f32 blur;
-  m44 matrix;
+
+  HscSnapshotIntent *intent;
 } HscSnapshot;
 
 typedef struct {
-  // General controller.
+  // -- General controller.
   // Deciding whether to take over the camera.
   i08 enable;
   // Deciding whether to display the camera UI.
@@ -170,48 +205,39 @@ typedef struct {
   // Deciding whether to reset camera coordinates for the next frame.
   i08 resetPosFlag;
 
-  // Inputs.
+  // -- Keyboard and mouse inputs.
   v4f movementInput;
   v4f facingInput;
 
-  // Camera parameters.
+  // -- Camera parameters from user input and for display with ImGui.
   // Position.
   v4f pos;
-  // Rotation in radians, for internal calculations.
+  // Rotation in radians, for internal calculations only.
   v4f rot;
-  // Rotation in degrees, only for user operation.
+  // Rotation in degrees, for user inputs.
   v4f rotDeg;
-  // Adjustable parameters during normal gaming, not avaliable on OM_WHISKER.
+  // Adjustable parameters when using SkyCamera.
   f32 scale;
   f32 focus;
   f32 brightness;
 
-  // Camera static parameters override.
+  // -- Camera static parameter override flags.
   i08 overridePos;
   i08 overrideDir;
   i08 overrideFocus;
   i08 overrideScale;
   i08 overrideBrightness;
 
-  // Freecam datas.
+  // -- Freecam data.
   f32 freecamSpeed;
   f32 freecamRotateSpeed;
   i08 freecamCollision;
   i08 freecamLockPosition;
   i08 freecamLockRotation;
 
-  // FPV datas.
+  // -- FPV data.
   i32 fpvMode;
-
-  // Pre-calculated rotation matrix and pos.
-  i08 useMatrix;
-  i08 usePos;
-  v4f mat[4];
 } HscContext;
-
-//-----------------------------------------------------------------------------
-// [SECTION] Globals.
-//-----------------------------------------------------------------------------
 
 // Key bindings.
 typedef union {
@@ -227,21 +253,35 @@ typedef union {
     HTHandle rollRight;
   };
   HTHandle keys[9];
-} KeyBindings_t;
+} HscKeyBindings;
 
 extern HMODULE hModuleDll;
-extern KeyBindings_t gBindedKeys;
+extern HscKeyBindings gBindedKeys;
+extern HscContext gContext;
+extern HscSnapshot gCamera;
+extern HscSnapshotIntent gCameraIntent;
+
+// Validate the matrix of the snapshot.
+static inline void hscValidateSnapshot(
+  HscSnapshot *snapshot
+) {
+  snapshot->matrix._14 = snapshot->matrix._24 = snapshot->matrix._34 = 0;
+  snapshot->matrix._44 = 1.0f;
+}
+
+static inline void hscSnapshotSetPos(
+  HscSnapshot *snapshot,
+  v4f pos
+) {
+  snapshot->pos = pos;
+  hscValidateSnapshot(snapshot);
+}
 
 //-----------------------------------------------------------------------------
-// [SECTION] Log implementations of hSC.
+// [SECTION] HSC_LOGGER
 //-----------------------------------------------------------------------------
 
-#define LOGI(format, ...) logImp("§f[hSC][INFO] " format, ##__VA_ARGS__)
-#define LOGW(format, ...) logImp("§e[hSC][WARN] " format, ##__VA_ARGS__)
-#define LOGE(format, ...) logImp("§c[hSC][ERR] " format, ##__VA_ARGS__)
-#define LOGEF(format, ...) logImp("§c[hSC][ERR][FATAL] " format, ##__VA_ARGS__)
-
-static void logImp(
+static void hscLog(
   const char *format,
   ...
 ) {
@@ -252,8 +292,13 @@ static void logImp(
   va_end(arg);
 }
 
+#define LOGI(format, ...) hscLog("§f[hSC][INFO] " format, ##__VA_ARGS__)
+#define LOGW(format, ...) hscLog("§e[hSC][WARN] " format, ##__VA_ARGS__)
+#define LOGE(format, ...) hscLog("§c[hSC][ERR] " format, ##__VA_ARGS__)
+#define LOGEF(format, ...) hscLog("§c[hSC][ERR][FATAL] " format, ##__VA_ARGS__)
+
 //-----------------------------------------------------------------------------
-// [SECTION] Plugin setup functions.
+// [SECTION] HSC_SETUP
 //-----------------------------------------------------------------------------
 
 #define REQUIRED_FUNC_COUNT 9
@@ -297,7 +342,7 @@ i08 hscSetupFuncWithSig(
   FuncAddresses *functions);
 
 //-----------------------------------------------------------------------------
-// [SECTION] Hook installer and hooked function type declarations.
+// [SECTION] HSC_HOOK
 //-----------------------------------------------------------------------------
 
 // Typedefs of trampoline functions.
@@ -324,7 +369,7 @@ i08 hscCreateAllHooks();
 i08 hscRemoveAllHooks();
 
 //-----------------------------------------------------------------------------
-// [SECTION] Camera updater of hSC.
+// [SECTION] HSC_CAM_UPDATE
 //-----------------------------------------------------------------------------
 
 typedef struct {

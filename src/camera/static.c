@@ -83,7 +83,9 @@ static i08 freecamCheckCollision(
   return result;
 }
 
-void hscPreupdateStatic(MainCamera *this) {
+void hscPreupdateStatic(
+  MainCamera *this
+) {
   // This function does:
   // overrideDir
   //   -> Calculate local matrix from rotation inputs.
@@ -91,7 +93,7 @@ void hscPreupdateStatic(MainCamera *this) {
   //   -> Calculate rotation from local matrix and copy to gui.
   //   -> Copy local matrix to the game.
   // !overrideDir
-  //   -> Calc rotation from the game.
+  //   -> Calculate rotation from the game.
   // overridePos
   //   -> Calculate delta position from local matrix (foward vector).
   //   -> Apply delta position from keyboard inputs to local position.
@@ -109,9 +111,9 @@ void hscPreupdateStatic(MainCamera *this) {
 
     // Convert facing directions to radians.
     gState.rot = v4fscale(gState.rotDeg, PI_F / 180.0f);
-    // Copy the rotation matrix to gState. We must provide the matrix to the
-    // gui.
-    eulerToRotationXYZ(gState.rot, gState.mat);
+    // Copy the rotation matrix to gCamera. eulerToRotationXYZ() only changes
+    // row1 ~ row3 of the matrix.
+    eulerToRotationXYZ(gState.rot, (v4f *)&gCamera.matrix);
 
     if (!gState.freecamLockRotation) {
       // Calculate rotation delta from hooked data.
@@ -131,10 +133,15 @@ void hscPreupdateStatic(MainCamera *this) {
       eulerToRotationXYZ(deltaRot, (v4f *)&matDelta);
       matDelta.row4 = v4fnew(0, 0, 0, 1);
       // Apply rotation delta to local matrix.
-      m44mul((m44 *)gState.mat, &matDelta, (m44 *)gState.mat);
+      // | ?, ?, ?, 0 |   | ?, ?, ?, 0 |
+      // | ?, ?, ?, 0 | * | ?, ?, ?, 0 |
+      // | ?, ?, ?, 0 |   | ?, ?, ?, 0 |
+      // | 0, 0, 0, 1 |   | #, #, #, 1 |
+      //    matDelta      gCamera.matrix
+      m44mul(&gCamera.matrix, &matDelta, &gCamera.matrix);
 
       // Calculate rotation from local matrix and show on gui.
-      (void)rotationToEulerXYZ(&gState.rot, (v4f *)gState.mat);
+      (void)rotationToEulerXYZ(&gState.rot, (v4f *)&gCamera.matrix);
       gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
     }
   } else {
@@ -144,18 +151,24 @@ void hscPreupdateStatic(MainCamera *this) {
     (void)rotationToEulerXYZ(&gState.rot, (v4f *)&this->context1.mat);
     gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
     // Copy game rotation matrix to local matrix.
-    memcpy((void *)gState.mat, (void *)&this->context1.mat, sizeof(m44));
+    v4f pos = gCamera.pos;
+    gCamera.matrix = this->context1.mat;
+    gCamera.pos = pos;
   }
 
+  hscValidateSnapshot(&gCamera);
+
   if (gState.overridePos && !gState.resetPosFlag) {
+    gCamera.pos = gState.pos;
+
     if (!gState.freecamLockPosition) {
       // Calculate the movement direction vector.
-      // Foward (gState.mat[1] towards backward, so we need to invert it).
-      delta = v4fscale(gState.mat[2], -gState.movementInput.z);
-      // Left (gState.mat[0] towards right, so we need to invert it).
-      delta = v4fadd(delta, v4fscale(gState.mat[0], -gState.movementInput.x));
+      // Foward (gCamera.matrix.row3 towards backward, so we need to invert it).
+      delta = v4fscale(gCamera.backward, -gState.movementInput.z);
+      // Left (gCamera.matrix.row1 towards right, so we need to invert it).
+      delta = v4fadd(delta, v4fscale(gCamera.left, -gState.movementInput.x));
       // Up.
-      delta = v4fadd(delta, v4fscale(gState.mat[1], gState.movementInput.y));
+      delta = v4fadd(delta, v4fscale(gCamera.up, gState.movementInput.y));
       // Normalize the vector.
       delta = v4fnormalize(delta);
 
@@ -164,23 +177,26 @@ void hscPreupdateStatic(MainCamera *this) {
 
       if (gState.freecamCollision) {
         // Build AABB and check collision.
-        aabb_fromCenter(&aabb, gState.pos, AABB_SIZE);
+        aabb_fromCenter(&aabb, gCamera.pos, AABB_SIZE);
         freecamCheckCollision(&aabb, &delta);
       }
 
-      gState.pos = v4fadd(gState.pos, delta);
+      gCamera.pos = v4fadd(gCamera.pos, delta);
     }
   } else {
     if (gState.resetPosFlag)
       gState.resetPosFlag = 0;
     // Copy the camera pos from the game.
-    gState.pos = this->context1.cameraPos;
+    gCamera.pos = this->context1.cameraPos;
   }
 
   // Copy position vector to local matrix, the vector is copied to the game in
   // hscUpdateCameraMain().
-  gState.mat[3] = gState.pos;
+  gState.pos = gCamera.pos;
+  hscValidateSnapshot(&gCamera);
 
-  gState.usePos = gState.overridePos;
-  gState.useMatrix = gState.overrideDir;
+  gCameraIntent.pos = gState.overridePos
+    ? HscIndentAxis_All
+    : HscIndentAxis_None;
+  gCameraIntent.rot = gState.overrideDir;
 }

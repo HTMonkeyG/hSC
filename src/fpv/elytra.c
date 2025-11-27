@@ -4,7 +4,7 @@
 
 static const v4f size = {0.1f, 0.1f, 0.1f, 0.1f};
 
-FPV_t gElytra = {0};
+HscFpv gElytra = {0};
 
 static v4f calculateViewVector(v4f rot) {
   f32 cy = cosf(rot.x)
@@ -21,7 +21,11 @@ static v4f calculateViewVector(v4f rot) {
  * @param view The view vector of the moving point.
  * @param timeElapsed Time elapsed since last frame.
  */
-static inline void elytraFirework(v4f mDelta, v4f view, f32 timeElapsed) {
+static inline void elytraFirework(
+  v4f mDelta,
+  v4f view,
+  f32 timeElapsed
+) {
   v4f velocity, tmp1;
 
   // Convert m/s to m/gt.
@@ -58,7 +62,10 @@ static inline void elytraFirework(v4f mDelta, v4f view, f32 timeElapsed) {
  * @param view The view vector of the moving point.
  * @param timeElapsed Time elapsed since last frame.
  */
-static inline void elytraTravel(v4f view, f32 timeElapsed) {
+static inline void elytraTravel(
+  v4f view,
+  f32 timeElapsed
+) {
   v4f vel, tmpVec, deltaVel;
   f32 timeGt = timeElapsed * 20.0f
     , viewXZLen = sqrtf(view.x * view.x + view.z * view.z)
@@ -114,7 +121,7 @@ static inline void elytraTravel(v4f view, f32 timeElapsed) {
   // Check collision.
   aabb_fromCenter(&aabb, gElytra.pos, size);
   deltaVel = gElytra.vel;
-  if (fpv_checkCollision(&aabb, &gElytra.vel, timeElapsed)) {
+  if (hscFpvCheckCollision(&aabb, &gElytra.vel, timeElapsed)) {
     deltaVel = v4fnormalize(v4fsub(gElytra.vel, deltaVel));
     // Calculate the pressure using the momentum theorem.
     friction = v4flen(deltaVel) / timeElapsed * 0.01f * timeElapsed;
@@ -132,8 +139,12 @@ static inline void elytraTravel(v4f view, f32 timeElapsed) {
   gElytra.pos = v4fadd(gElytra.pos, v4fscale(gElytra.vel, timeElapsed));
 }
 
-FPV_t *fpvElytra_init(v4f pos, v4f rot, i32 flags) {
-  memset(&gElytra, 0, sizeof(FPV_t));
+HscFpv *hscFpvElytraInit(
+  v4f pos,
+  v4f rot,
+  i32 flags
+) {
+  memset(&gElytra, 0, sizeof(HscFpv));
   if (flags & FPVRST_POS)
     gElytra.pos = pos;
   if (flags & FPVRST_ROT)
@@ -145,7 +156,11 @@ FPV_t *fpvElytra_init(v4f pos, v4f rot, i32 flags) {
   return &gElytra;
 }
 
-FPV_t *fpvElytra_update(v4f mDelta, v4f fDelta, f32 timeElapsed) {
+HscFpv *hscFpvElytraUpdate(
+  v4f mDelta,
+  v4f fDelta,
+  f32 timeElapsed
+) {
   v4f view, factor;
   m44 dRot = {0};
   const v4f rotationFriction1 = { 1.0f, 1.0f, 1.0f, 1.0f }
@@ -188,14 +203,18 @@ FPV_t *fpvElytra_update(v4f mDelta, v4f fDelta, f32 timeElapsed) {
   return &gElytra;
 }
 
-void fpvElytra_enableRoll(i08 enable) {
+void hscFpvElytraEnableRoll(
+  i08 enable
+) {
   if (enable)
     gElytra.flags |= FPVELYTRA_ROLL;
   else
     gElytra.flags &= ~FPVELYTRA_ROLL;
 }
 
-void fpvElytra_enableSmooth(i08 enable) {
+void hscFpvElytraEnableSmooth(
+  i08 enable
+) {
   if (enable)
     gElytra.flags |= FPVELYTRA_SMOOTH;
   else

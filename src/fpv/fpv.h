@@ -12,9 +12,9 @@ extern "C" {
 
 // The type of the fpv update functions must match the definition below.
 typedef i08 (__fastcall *PFN_FpvUpdate)(
-  v4f mDelta, v4f fDelta, f32 timeElapsed);
+  v4f, v4f, f32);
 typedef i08 (__fastcall *PFN_FpvReset)(
-  v4f pos, v4f rot, i32 flags);
+  v4f, v4f, i32);
 
 typedef struct {
   // User-defined flags.
@@ -30,11 +30,14 @@ typedef struct {
   v4f avel;
   v4f aacc;
 
-  // Rotation matrix and position vector.
+  // Rotation matrix and position vector, the final output.
   m44 matrix;
-} FPV_t;
+} HscFpv;
 
-i08 fpv_checkCollision(AABB_t *aabb, v4f *velocity, f32 timeElapsed);
+i08 hscFpvCheckCollision(
+  AABB_t *aabb,
+  v4f *velocity,
+  f32 timeElapsed);
 
 #ifdef __cplusplus
 }

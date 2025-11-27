@@ -4,7 +4,7 @@
 #include "ui/ui.h"
 
 v4f gMouseDeltaPx = {0};
-KeyBindings_t gBindedKeys;
+HscKeyBindings gBindedKeys;
 
 static void inputStaticMode() {
   v4f r = v4fnew(0.0f, 0.0f, 0.0f, 0.0f)

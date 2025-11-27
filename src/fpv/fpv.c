@@ -7,7 +7,7 @@
  * 
  * The pointer passed into this function must be a local variable address.
  */
-i08 fpv_checkCollision(
+i08 hscFpvCheckCollision(
   AABB_t *aabb,
   v4f *velocity,
   f32 timeElapsed
