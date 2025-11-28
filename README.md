@@ -16,7 +16,7 @@
 &emsp;&emsp;完整使用手册请[点击此处](https://github.com/HTMonkeyG/hSC/blob/main/doc/manual.md)。<br>
 &emsp;&emsp;按下键盘上`F1`键即可显示ImGui内置界面。若在游戏中需要按住Alt显示鼠标指针后点击操作。<br>
 &emsp;&emsp;界面最上方复选框Enable plugin为全局开关，勾选即接管相机。下方下拉框选择要接管的相机模式：First person为第一人称手持，Front为前置，Placed为三脚架，Whisker为主相机。<br>
-&emsp;&emsp;下方的标签栏为运算类型：Static为静态模式 ~~，Dynamic为动态模式，Animation为关键帧模式~~。
+&emsp;&emsp;下方的标签栏为运算类型：Static为静态模式，Dynamic为动态模式 ~~，Animation为关键帧模式~~。
 
 ### 1.1 静态模式
 &emsp;&emsp;选择该选项后下方会出现多个输入框，其中包含坐标、朝向、对焦、缩放、亮度设置，直接输入数字即可。勾选对应操作的复选框后输入才有效。<br>
