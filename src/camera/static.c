@@ -122,7 +122,7 @@ void hscPreupdateStatic(
       deltaRot.x = -mouseDelta.x;
       deltaRot.y = mouseDelta.y;
       // Swap yaw and roll inputs.
-      if (gOptions.freecam.swapRollYaw) {
+      if (gOptions.control.swapRollYaw) {
         f32 t = deltaRot.z;
         deltaRot.z = deltaRot.x;
         deltaRot.x = t;

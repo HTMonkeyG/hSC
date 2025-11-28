@@ -112,36 +112,26 @@ void hscUIMenuAnim() {
 }
 
 void hscUIMenuSettings() {
-  ImGui::SeparatorText("General settings");
+  ImGui::SeparatorText("Control settings");
 
   ImGui::Text("Mouse sensitivity");
   ImGui::DragFloat(
-    "##settingsDrag1",
-    &gOptions.general.mouseSensitivity,
+    "##settingsMouseSense",
+    &gOptions.control.mouseSensitivity,
     0.01f,
     0.0f,
     10.0f);
+
   ImGui::Text("Vertical sensitivity scale");
   ImGui::DragFloat(
-    "##settingsDrag2",
-    &gOptions.general.verticalSenseScale,
+    "##settingsVSenseScales",
+    &gOptions.control.verticalSenseScale,
     0.01f,
     0.0f,
     2.0f);
 
-  ImGui::SeparatorText("Freecam settings");
-  
-  ImGui::Text("Full-takeover by default");
-  hscUIShowTips(
-    "The plugin will automatically obtain mouse increments and calculate"
-    "rotations, instead of using the game's original calculations.",
-    1);
-  ImGui::Checkbox(
-    "##settingsCheckbox3",
-    (bool *)&gOptions.freecam.fullTakeover);
-
   ImGui::Text("Swap yaw and roll");
   ImGui::Checkbox(
-    "##settingsCheckbox4",
-    (bool *)&gOptions.freecam.swapRollYaw);
+    "##settingsSwapYawAndRoll",
+    (bool *)&gOptions.control.swapRollYaw);
 }

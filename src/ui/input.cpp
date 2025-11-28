@@ -147,8 +147,8 @@ v4f hscGetFacingDeltaRad() {
   // About 16000px per 360 degree when the sensitivity is 1.
   result = v4fscale(
     result,
-    2.0f * PI_F / 16384.0f / 4.0f * gOptions.general.mouseSensitivity);
-  result.y *= gOptions.general.verticalSenseScale;
+    2.0f * PI_F / 16384.0f / 4.0f * gOptions.control.mouseSensitivity);
+  result.y *= gOptions.control.verticalSenseScale;
 
   return result;
 }

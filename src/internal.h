@@ -192,11 +192,8 @@ typedef struct {
   struct {
     f32 mouseSensitivity;
     f32 verticalSenseScale;
-  } general;
-  struct {
     i08 swapRollYaw;
-    i08 fullTakeover;
-  } freecam;
+  } control;
 } HscOptions;
 
 extern HMODULE hModuleDll;

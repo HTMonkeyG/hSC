@@ -15,11 +15,9 @@ LARGE_INTEGER gLastFrame;
 f32 gTimeElapsed;
 HscContext gContext = {0};
 HscOptions gOptions = {
-  .general = {
+  .control = {
     .mouseSensitivity = 3.35f,
-    .verticalSenseScale = 1.0f
-  },
-  .freecam = {
+    .verticalSenseScale = 1.0f,
     .swapRollYaw = 0
   }
 };
@@ -38,7 +36,7 @@ void hscUIWindowMain() {
   // General options.
   if (ImGui::Checkbox("Enable plugin", (bool *)&gContext.enable))
     ;//gContext.resetPosFlag = 1;
-  ImGui::Combo("Mode overriden", &gContext.cameraMode, MODES, IM_ARRAYSIZE(MODES));
+  ImGui::Combo("Overriden mode", &gContext.cameraMode, MODES, IM_ARRAYSIZE(MODES));
   ImGui::Checkbox("No UI", (bool *)&gContext.noOriginalUi);
   hscUIShowTips(
     "Hide the original camera UI. Please adjust the parameters before select"
