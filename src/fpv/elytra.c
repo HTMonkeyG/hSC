@@ -161,10 +161,13 @@ HscFpv *hscFpvElytraUpdate(
   v4f fDelta,
   f32 timeElapsed
 ) {
-  v4f view, factor;
-  m44 dRot = {0};
+  v4f view, factor, dRot;
+  m44 dRotMat = {0};
   const v4f rotationFriction1 = { 1.0f, 1.0f, 1.0f, 1.0f }
     , rotationFriction2 = { 0.1f, 0.1f, 0.1f, 0.1f };
+  
+  // Convert fDelta from rad to rad/s.
+  fDelta = v4fscale(fDelta, 1 / timeElapsed);
 
   // Apply smooth effect.
   if (gElytra.flags & FPVELYTRA_SMOOTH) {
@@ -174,17 +177,23 @@ HscFpv *hscFpvElytraUpdate(
     gElytra.aacc = v4fmul(v4fsub(fDelta, gElytra.avel), factor);
     gElytra.avel = v4fadd(gElytra.avel, v4fscale(gElytra.aacc, timeElapsed));
   } else {
+    // Set the angular velocity directly.
     gElytra.aacc = V4FZERO;
     gElytra.avel = fDelta;
   }
 
+  // Calculate the rotation delta from angular velocity.
+  dRot = v4fscale(gElytra.avel, timeElapsed);
+
   // Update rotation.
   if (gElytra.flags & FPVELYTRA_ROLL) {
-    eulerToRotationXYZ(gElytra.avel, dRot.rows);
-    m44mul(&gElytra.matrix, &dRot, &gElytra.matrix);
+    // Enable full direction movement, like Do-a-barrel-roll.
+    eulerToRotationXYZ(dRot, dRotMat.rows);
+    m44mul(&gElytra.matrix, &dRotMat, &gElytra.matrix);
     view = v4fscale(gElytra.matrix.row3, -1.0f);
   } else {
-    gElytra.rot = v4fadd(gElytra.rot, gElytra.avel);
+    // Vanilla minecraft elytra facings.
+    gElytra.rot = v4fadd(gElytra.rot, dRot);
     gElytra.rot.y = m_clamp(gElytra.rot.y, -PI_F * 0.4975f, PI_F * 0.4975f);
     gElytra.rot.z = gElytra.rot.w = 0;
     view = calculateViewVector(gElytra.rot);

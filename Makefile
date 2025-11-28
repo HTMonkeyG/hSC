@@ -11,6 +11,8 @@ CPP_SRC = $(wildcard $(SRC_DIR)/*.cpp $(SRC_DIR)/*/*.cpp)
 C_OBJ = $(addprefix $(DIST_DIR)/, $(notdir $(C_SRC:.c=.o)))
 CPP_OBJ = $(addprefix $(DIST_DIR)/, $(notdir $(CPP_SRC:.cpp=.o)))
 
+CXX_HEADER = $(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h)
+
 VERSION_SCRIPT = $(SRC_DIR)/exports.txt
 
 TARGET = hsc-main.dll
@@ -30,7 +32,6 @@ CFLAGS += -I./libraries/htmodloader/includes/imgui-1.92.2b -I./libraries/htmodlo
 CFLAGS += -I./libraries/htmodloader/includes/htmodloader
 
 LFLAGS = -Wl,--gc-sections,-O3,--as-needed,--version-script=$(VERSION_SCRIPT)
-LFLAGS += -lstdc++
 LFLAGS += -L./libraries/htmodloader/lib -lhtmodloader
 
 vpath %.c $(SRC_DIRS)
@@ -45,11 +46,11 @@ $(BIN_TARGET): $(C_OBJ) $(CPP_OBJ)
 	@$(CXX) $(CFLAGS) $^ -shared -o $@ $(LFLAGS)
 	@echo Done.
 
-$(DIST_DIR)/%.o: %.c
+$(DIST_DIR)/%.o: %.c $(CXX_HEADER)
 	@echo Compiling file "$<" ...
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(DIST_DIR)/%.o: %.cpp
+$(DIST_DIR)/%.o: %.cpp $(CXX_HEADER)
 	@echo Compiling file "$<" ...
 	@$(CXX) $(CFLAGS) -c $< -o $@
 

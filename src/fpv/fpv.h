@@ -17,20 +17,27 @@ typedef i08 (__fastcall *PFN_FpvReset)(
   v4f, v4f, i32);
 
 typedef struct {
-  // User-defined flags.
+  // -- User-defined flags.
   u32 flags;
 
-  // Movement. Only the x, y and z components are used.
+  // -- Movement.
+  // Position.
   v4f pos;
+  // Velocity.
   v4f vel;
+  // Acceleration.
   v4f acc;
 
-  // Rotation. Only the x and y components are used.
+  // -- Rotation.
+  // Rotation.
   v4f rot;
+  // Angular velocity.
   v4f avel;
+  // Angular acceleration.
   v4f aacc;
 
-  // Rotation matrix and position vector, the final output.
+  // Rotation matrix and position vector, the final output. The update
+  // function must convert `rot` and `pos` into this field.
   m44 matrix;
 } HscFpv;
 
