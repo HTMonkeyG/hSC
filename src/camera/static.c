@@ -1,4 +1,3 @@
-#include "ui/ui.h"
 #include "internal.h"
 
 static const v4f AABB_SIZE = {0.1f, 0.1f, 0.1f, 0.1f};
@@ -106,20 +105,20 @@ void hscPreupdateStatic(
   m44 matDelta = {0};
   AABB_t aabb;
 
-  if (gState.overrideDir) {
+  if (gContext.overrideDir) {
     mouseDelta = hscGetFacingDeltaRad();
 
     // Convert facing directions to radians.
-    gState.rot = v4fscale(gState.rotDeg, PI_F / 180.0f);
+    gContext.rot = v4fscale(gContext.rotDeg, PI_F / 180.0f);
     // Copy the rotation matrix to gCamera. eulerToRotationXYZ() only changes
     // row1 ~ row3 of the matrix.
-    eulerToRotationXYZ(gState.rot, (v4f *)&gCamera.matrix);
+    eulerToRotationXYZ(gContext.rot, (v4f *)&gCamera.matrix);
 
-    if (!gState.freecamLockRotation) {
+    if (!gContext.freecamLockRotation) {
       // Calculate rotation delta from hooked data.
-      deltaRot.z = gState.facingInput.z
-        * gState.freecamRotateSpeed
-        * gGui.timeElapsedSecond;
+      deltaRot.z = gContext.facingInput.z
+        * gContext.freecamRotateSpeed
+        * gTimeElapsed;
       deltaRot.x = -mouseDelta.x;
       deltaRot.y = mouseDelta.y;
       // Swap yaw and roll inputs.
@@ -141,15 +140,15 @@ void hscPreupdateStatic(
       m44mul(&gCamera.matrix, &matDelta, &gCamera.matrix);
 
       // Calculate rotation from local matrix and show on gui.
-      (void)rotationToEulerXYZ(&gState.rot, (v4f *)&gCamera.matrix);
-      gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
+      (void)rotationToEulerXYZ(&gContext.rot, (v4f *)&gCamera.matrix);
+      gContext.rotDeg = v4fscale(gContext.rot, 180.0f / PI_F);
     }
   } else {
     // Sync original facing directions to overlay. We assume that the rotation
     // matrix is in the order of yaw-pitch-roll, so we can apply the following
     // codes.
-    (void)rotationToEulerXYZ(&gState.rot, (v4f *)&this->context1.mat);
-    gState.rotDeg = v4fscale(gState.rot, 180.0f / PI_F);
+    (void)rotationToEulerXYZ(&gContext.rot, (v4f *)&this->context1.mat);
+    gContext.rotDeg = v4fscale(gContext.rot, 180.0f / PI_F);
     // Copy game rotation matrix to local matrix.
     v4f pos = gCamera.pos;
     gCamera.matrix = this->context1.mat;
@@ -158,24 +157,24 @@ void hscPreupdateStatic(
 
   hscValidateSnapshot(&gCamera);
 
-  if (gState.overridePos && !gState.resetPosFlag) {
-    gCamera.pos = gState.pos;
+  if (gContext.overridePos && !gContext.resetPosFlag) {
+    gCamera.pos = gContext.pos;
 
-    if (!gState.freecamLockPosition) {
+    if (!gContext.freecamLockPosition) {
       // Calculate the movement direction vector.
       // Foward (gCamera.matrix.row3 towards backward, so we need to invert it).
-      delta = v4fscale(gCamera.backward, -gState.movementInput.z);
+      delta = v4fscale(gCamera.backward, -gContext.movementInput.z);
       // Left (gCamera.matrix.row1 towards right, so we need to invert it).
-      delta = v4fadd(delta, v4fscale(gCamera.left, -gState.movementInput.x));
+      delta = v4fadd(delta, v4fscale(gCamera.left, -gContext.movementInput.x));
       // Up.
-      delta = v4fadd(delta, v4fscale(gCamera.up, gState.movementInput.y));
+      delta = v4fadd(delta, v4fscale(gCamera.up, gContext.movementInput.y));
       // Normalize the vector.
       delta = v4fnormalize(delta);
 
       // Multiply by speed.
-      delta = v4fscale(delta, gState.freecamSpeed * gGui.timeElapsedSecond);
+      delta = v4fscale(delta, gContext.freecamSpeed * gTimeElapsed);
 
-      if (gState.freecamCollision) {
+      if (gContext.freecamCollision) {
         // Build AABB and check collision.
         aabb_fromCenter(&aabb, gCamera.pos, AABB_SIZE);
         freecamCheckCollision(&aabb, &delta);
@@ -184,19 +183,19 @@ void hscPreupdateStatic(
       gCamera.pos = v4fadd(gCamera.pos, delta);
     }
   } else {
-    if (gState.resetPosFlag)
-      gState.resetPosFlag = 0;
+    if (gContext.resetPosFlag)
+      gContext.resetPosFlag = 0;
     // Copy the camera pos from the game.
     gCamera.pos = this->context1.cameraPos;
   }
 
   // Copy position vector to local matrix, the vector is copied to the game in
   // hscUpdateCameraMain().
-  gState.pos = gCamera.pos;
+  gContext.pos = gCamera.pos;
   hscValidateSnapshot(&gCamera);
 
-  gCameraIntent.pos = gState.overridePos
+  gCameraIntent.pos = gContext.overridePos
     ? HscIndentAxis_All
     : HscIndentAxis_None;
-  gCameraIntent.rot = gState.overrideDir;
+  gCameraIntent.rot = gContext.overrideDir;
 }

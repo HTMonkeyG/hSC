@@ -1,5 +1,4 @@
 #include "includes/htmod.h"
-#include "ui/ui.h"
 #include "internal.h"
 
 // HTML uses key name to sort key bindings, so we add a number to make the key
@@ -13,7 +12,9 @@ static const char *KEY_NAMES[] = {
   "5 Up",
   "6 Down",
   "7 Roll left",
-  "8 Roll right"
+  "8 Roll right",
+  "9 Reset pos",
+  "10 Start/Stop"
 };
 static const HTKeyCode DEFAULT_KEYS[] = {
   HTKey_F1,
@@ -24,44 +25,10 @@ static const HTKeyCode DEFAULT_KEYS[] = {
   HTKey_Space,
   HTKey_LeftShift,
   HTKey_Q,
-  HTKey_E
+  HTKey_E,
+  HTKey_None,
+  HTKey_None
 };
-
-static void keyEventCallbackGeneral(HTKeyEvent *event) {
-  if (event->hKey == gBindedKeys.menu) {
-    if (event->flags == HTKeyEventFlags_Down)
-      // Toggle the menu status when the key is pressed.
-      gGui.isOpen = !gGui.isOpen;
-  } else if (
-    event->hKey == gBindedKeys.foward
-    || event->hKey == gBindedKeys.backward
-    || event->hKey == gBindedKeys.left
-    || event->hKey == gBindedKeys.right
-    || event->hKey == gBindedKeys.up
-    || event->hKey == gBindedKeys.down
-  ) {
-    if (
-      event->flags == HTKeyEventFlags_Down
-      && gState.enable
-      && !gState.freecamLockPosition
-      && gState.overridePos
-    )
-      // Like elder hSC versions, we only block keyDown messages.
-      event->preventFlags |= HTKeyEventPreventFlags_Game;
-  } else if (
-    event->hKey == gBindedKeys.rollLeft
-    || event->hKey == gBindedKeys.rollRight
-  ) {
-    if (
-      event->flags == HTKeyEventFlags_Down
-      && gState.enable
-      && !gState.freecamLockRotation
-      && gState.overrideDir
-    )
-      // Like elder hSC versions, we only block keyDown messages.
-      event->preventFlags |= HTKeyEventPreventFlags_Game;
-  }
-}
 
 __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
   void *reserved
@@ -73,7 +40,7 @@ __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
       DEFAULT_KEYS[i]);
     HTHotkeyListen(
       gBindedKeys.keys[i],
-      keyEventCallbackGeneral);
+      hscKeyEventCallbackMain);
   }
 
   // Create all hooks.
@@ -94,10 +61,10 @@ __declspec(dllexport) void HTMLAPI HTModRenderGui(
   void *reserved
 ) {
   // Draw menus.
-  if (gGui.isOpen)
+  if (gContext.isMenuShown)
     hscUIWindowMain();
 
   // Handle keyboard input.
-  if (gState.enable)
+  if (gContext.enable)
     hscInputHandler();
 }

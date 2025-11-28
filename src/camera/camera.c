@@ -1,14 +1,8 @@
 #include <math.h>
 
 #include "internal.h"
-#include "ui/ui.h"
 
-// Global context of the plugin.
-HscContext gContext;
-
-// The camera status to be updated to the current camera object of the game.
 HscSnapshot gCamera;
-// The avaliable fields in gCamera.
 HscSnapshotIntent gCameraIntent;
 
 /**
@@ -20,28 +14,29 @@ HscSnapshotIntent gCameraIntent;
 void hscPreupdateCameraMain(
   MainCamera *this
 ) {
-  i64 qpc, inteval;
+  LARGE_INTEGER qpc;
+  i64 inteval;
 
   // Calculate time elapsed since last frame.
-  if (!gGui.lastFrameCounter)
-    QueryPerformanceCounter((LARGE_INTEGER *)&gGui.lastFrameCounter);
+  if (!gLastFrame.QuadPart)
+    QueryPerformanceCounter(&gLastFrame);
   else {
-    QueryPerformanceCounter((LARGE_INTEGER *)&qpc);
-    inteval = qpc - gGui.lastFrameCounter;
-    gGui.lastFrameCounter = qpc;
-    gGui.timeElapsedSecond = (f32)inteval / (f32)gGui.performFreq;
+    QueryPerformanceCounter(&qpc);
+    inteval = qpc.QuadPart - gLastFrame.QuadPart;
+    gLastFrame = qpc;
+    gTimeElapsed = (f32)inteval / (f32)gPerformFreq.QuadPart;
   }
 
-  if (!gState.enable)
+  if (!gContext.enable)
     return;
 
   gCameraIntent.pos = gCameraIntent.rot = 0;
 
-  if (gState.majorMode == MM_STATIC)
+  if (gContext.majorMode == HscMajorMode_Static)
     hscPreupdateStatic(this);
-  else if (gState.majorMode == MM_DYNAMIC)
+  else if (gContext.majorMode == HscMajorMode_Dynamic)
     hscPreupdateDynamic(this);
-  else if (gState.majorMode == MM_ANIMATION)
+  else if (gContext.majorMode == HscMajorMode_Animation)
     hscPreupdateAnim(this);
 }
 
@@ -51,7 +46,7 @@ void hscPreupdateCameraMain(
 void hscUpdateCameraMain(
   MainCamera *this
 ) {
-  if (!gState.enable)
+  if (!gContext.enable)
     return;
 
   hscValidateSnapshot(&gCamera);

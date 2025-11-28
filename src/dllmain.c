@@ -12,7 +12,6 @@
 #include "includes/htmod.h"
 
 #include "internal.h"
-#include "ui/ui.h"
 
 HMODULE hModuleDll;
 
@@ -23,7 +22,7 @@ BOOL APIENTRY DllMain(
 ) {
   if (dwReason == DLL_PROCESS_ATTACH) {
     hModuleDll = hModule;
-    QueryPerformanceFrequency((LARGE_INTEGER *)&gGui.performFreq);
+    QueryPerformanceFrequency(&gPerformFreq);
   }
 
   return TRUE;

@@ -4,12 +4,13 @@
 #include <windows.h>
 #include "includes/htmodloader.h"
 
-#include "aliases.h"
 #include "mth/macros.h"
 #include "mth/vector.h"
 #include "mth/matrix.h"
 #include "mth/euler.h"
 #include "mth/aabb.h"
+#include "aliases.h"
+#include "sky.h"
 
 #define HSC_VERSION "0.4.0"
 
@@ -22,133 +23,29 @@ extern "C" {
 #endif
 
 //-----------------------------------------------------------------------------
-// [SECTION] SKY_GAME_TYPES
-//-----------------------------------------------------------------------------
-
-typedef enum {
-  FIRST = 1,
-  FRONT = 2,
-  PLACE = 3
-} SkyCameraType;
-
-// Stores the status of the camera prop.
-typedef struct {
-  i64 lpVtbl;
-  i32 field_8;
-  i08 field_C;
-  i64 field_D;
-  i64 field_E;
-  i08 field_15;
-  i32 field_16;
-  i08 field_1E;
-  i32 unk_1;
-  i32 field_1F;
-  i32 field_23;
-  i08 cameraType;
-  i08 unk_2[15];
-  u64 player;
-  i08 unk_2_2[56];
-  u64 *unk_2_3;
-  u64 *unk_2_4;
-  u64 *unk_2_5;
-  i08 unk_2_6[13];
-  v4f cameraPos;
-  i08 unk_3[64];
-  f32 rotateXAnim;
-  f32 rotateYAnim;
-  i08 unk_4[8];
-  f32 rotateSpeedX;
-  f32 rotateSpeedY;
-  i08 unk_4_2[8];
-  f32 rotateX;
-  f32 rotateY;
-  u64 unk_4_3;
-  f32 scale;
-  f32 scaleAnim;
-  i08 unk_4_4[24];
-  f32 focus;
-  f32 focusAnim;
-  u64 unk_4_5;
-  f32 brightness;
-  f32 brightnessAnim;
-  i08 unk_5[88];
-  v4f lookAt;
-  i08 unk_6[40];
-  f32 unk_7;
-  i08 unk_8[20];
-  i32 *unk_8_2;
-  i08 unk_8_3[5];
-} SkyCameraProp;
-
-typedef struct {
-  u32 unk_1;
-  // The field-of-view in the unit of 'rad'.
-  f32 fov;
-  u64 unk_2;
-  union {
-    struct {
-      // Rotate matrix (3x3) is stored separately by rows in three vectors. The
-      // last component of these vectors is 0.
-      v4f left;
-      v4f up;
-      v4f backward;
-      // The last element of this vector is 1. We can consider the four vectors
-      // as a single matrix (4x4).
-      v4f cameraPos;
-    };
-    m44 mat;
-  };
-  char unk_4[32];
-} MainCameraContext;
-
-// The parent class of all possible camera updates.
-typedef struct MainCamera_ {
-  u64 *lpVtbl;
-  u64 unk_1;
-  u64 unk_2;
-  struct MainCamera_ *prev;
-  struct MainCamera_ *next;
-  u64 unk_3;
-  MainCameraContext context1;
-  MainCameraContext context2;
-  u64 active;
-} MainCamera;
-
-// The size of the following two structs is incorrect. This definition only
-// contains components what we need.
-
-// The states of the default camera of the player.
-typedef struct {
-  MainCamera super;
-  char unk_1[56];
-  v4f mouseDelta;
-  char unk_2[1456];
-} WhiskerCamera;
-
-// The camera status of the players's camera accessory.
-typedef struct {
-  MainCamera super;
-  void *prop;
-  void *unk_2;
-  void *unk_3;
-  v4f pos;
-  v4f dir;
-} SkyCamera;
-
-#define SkyCamera_getPropPtr(sc) ((SkyCameraProp *)((i08 *)(((SkyCamera *)(sc))->prop) - 0x88))
-
-// The return value of World::interactionTest().
-typedef struct {
-  // Intersection point.
-  v4f intersection;
-  // Normal vector.
-  v4f normal;
-  i08 unk[0x40];
-} InteractionResult;
-
-//-----------------------------------------------------------------------------
 // [SECTION] HSC_GLOBALS
 //-----------------------------------------------------------------------------
+
+typedef i32 HscMajorMode;
+enum HscMajorMode_ {
+  HscMajorMode_Static = 0,
+  HscMajorMode_Dynamic = 1,
+  HscMajorMode_Animation = 2,
+};
+
+typedef i32 HscCameraMode;
+enum HscCameraMode_ {
+  HscCameraMode_Handheld = 0,
+  HscCameraMode_Selfie = 1,
+  HscCameraMode_Tripod = 2,
+  HscCameraMode_Whisker = 3
+};
+// Performance counter frequency. Initialized once by DllMain().
+extern LARGE_INTEGER gPerformFreq;
+// Performance counter value on the last frame.
+extern LARGE_INTEGER gLastFrame;
+// Time elapsed since the last frame.
+extern f32 gTimeElapsed;
 
 // The avaliable fields in a vector.
 typedef i32 HscIndentAxis;
@@ -160,8 +57,23 @@ typedef enum {
   HscIndentAxis_Z = 1 << 2,
   HscIndentAxis_W = 1 << 3,
 
-  HscIndentAxis_All = 0x0F
+  HscIndentAxis_All = 
+    HscIndentAxis_X | HscIndentAxis_Y | HscIndentAxis_Z | HscIndentAxis_W
 } HscIndentAxis_;
+
+// The avaliable fields in a vector.
+typedef i32 HscIndentBlur;
+typedef enum {
+  HscIndentBlur_None = 0,
+
+  HscIndentBlur_Near = 1 << 0,
+  HscIndentBlur_Far = 1 << 1,
+  HscIndentBlur_StrengthNear = 1 << 2,
+  HscIndentBlur_StrengthFar = 1 << 3,
+
+  HscIndentBlur_All = 
+    HscIndentBlur_Near | HscIndentBlur_Far | HscIndentBlur_StrengthNear | HscIndentBlur_StrengthFar
+} HscIndentBlur_;
 
 // The avaliable fields of a snapshot.
 typedef struct {
@@ -170,11 +82,12 @@ typedef struct {
 
   i08 fov;
   i08 gamma;
-  i08 blur;
+  HscIndentBlur blur;
 } HscSnapshotIntent;
 
 // Camera status snapshot, for interpolation.
 typedef struct {
+  // Rotation and position.
   union {
     struct {
       v4f left;
@@ -185,23 +98,36 @@ typedef struct {
     m44 matrix;
   };
 
+  // Blur.
+  union {
+    struct {
+      f32 distNear;
+      f32 distFar;
+      f32 strengthNear;
+      f32 strengthFar;
+    };
+    v4f blur;
+  };
+
   f32 fov;
   f32 gamma;
-  f32 blur;
 
+  // Related object.
   HscSnapshotIntent *intent;
 } HscSnapshot;
 
 typedef struct {
+  i08 isMenuShown;
+
   // -- General controller.
   // Deciding whether to take over the camera.
   i08 enable;
   // Deciding whether to display the camera UI.
   i08 noOriginalUi;
   // Deciding on how to take over camera operations.
-  i32 majorMode;
+  HscMajorMode majorMode;
   // Deciding which camera mode to take over.
-  i32 cameraMode;
+  HscCameraMode cameraMode;
   // Deciding whether to reset camera coordinates for the next frame.
   i08 resetPosFlag;
 
@@ -242,7 +168,10 @@ typedef struct {
 // Key bindings.
 typedef union {
   struct {
+    // -- Menu toggle.
     HTHandle menu;
+
+    // -- Movement inputs.
     HTHandle foward;
     HTHandle backward;
     HTHandle left;
@@ -251,14 +180,35 @@ typedef union {
     HTHandle down;
     HTHandle rollLeft;
     HTHandle rollRight;
+
+    // -- Dynamic mode simulation operations.
+    HTHandle resetPos;
+    HTHandle pause;
   };
-  HTHandle keys[9];
+  HTHandle keys[11];
 } HscKeyBindings;
+
+typedef struct {
+  struct {
+    f32 mouseSensitivity;
+    f32 verticalSenseScale;
+  } general;
+  struct {
+    i08 swapRollYaw;
+    i08 fullTakeover;
+  } freecam;
+} HscOptions;
 
 extern HMODULE hModuleDll;
 extern HscKeyBindings gBindedKeys;
+// Global context of the plugin.
 extern HscContext gContext;
+extern HscOptions gOptions;
+extern v4f gMouseDeltaPx;
+
+// The camera status to be updated to the current camera object of the game.
 extern HscSnapshot gCamera;
+// The avaliable fields in gCamera.
 extern HscSnapshotIntent gCameraIntent;
 
 // Validate the matrix of the snapshot.
@@ -372,28 +322,48 @@ i08 hscRemoveAllHooks();
 // [SECTION] HSC_CAM_UPDATE
 //-----------------------------------------------------------------------------
 
-typedef struct {
-  MainCamera super;
+void hscPreupdateStatic(
+  MainCamera *);
+void hscPreupdateDynamic(
+  MainCamera *);
+void hscPreupdateAnim(
+  MainCamera *);
 
-  i08 useFov;
-  i08 useMatrix;
-  i08 usePos;
-} InjectCamera;
+void hscUpdatePropMain(
+  SkyCameraProp *);
+void hscPreupdateCameraMain(
+  MainCamera *);
+void hscUpdateCameraMain(
+  MainCamera *);
 
-// Unused. Inject our camera in the game's camera system.
-extern InjectCamera gInjectCamera;
+//-----------------------------------------------------------------------------
+// [SECTION] HSC_UI
+//-----------------------------------------------------------------------------
 
-void hscPreupdateStatic(MainCamera *);
-void hscPreupdateDynamic(MainCamera *);
-void hscPreupdateAnim(MainCamera *);
+// ImGui widgets.
+void hscUIShowTips(
+  const char *desc,
+  i08 sameLine);
 
-void hscUpdatePropMain(SkyCameraProp *);
-void hscPreupdateCameraMain(MainCamera *);
-void hscUpdateCameraMain(MainCamera *);
+// Submenus.
+void hscUIMenuStatic();
+void hscUIMenuDynamic();
+void hscUIMenuAnim();
+void hscUIMenuSettings();
+
+// Windows.
+void hscUIWindowMain();
+
+// Handle keyboard and mouse inputs.
+void hscInputHandler();
+// Key event callback.
+void hscKeyEventCallbackMain(
+  HTKeyEvent *);
+// Convert mouse movement to radians.
+v4f hscGetFacingDeltaRad();
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
-

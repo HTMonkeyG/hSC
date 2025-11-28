@@ -1,4 +1,3 @@
-#include "ui/ui.h"
 #include "internal.h"
 
 // ----------------------------------------------------------------------------
@@ -20,29 +19,29 @@ static inline void overrideOrCopy(
 static void updatePropStatic(SkyCameraProp *this) {
   // We don't override camera pos in SkyCameraProp to prevent the camera from
   // automatically turning off due to being too far away.
-  if (gState.overrideDir && gState.cameraMode == CM_FRONT) {
+  if (gContext.overrideDir && gContext.cameraMode == HscCameraMode_Selfie) {
     // Override camera rotations.
-    this->rotateXAnim = this->rotateX = -gState.rot.x;
-    this->rotateYAnim = this->rotateY = -gState.rot.y;
+    this->rotateXAnim = this->rotateX = -gContext.rot.x;
+    this->rotateYAnim = this->rotateY = -gContext.rot.y;
     this->rotateSpeedX = this->rotateSpeedY = 0;
   }
 
   // Override or copy camera params.
   overrideOrCopy(
-    gState.overrideScale,
+    gContext.overrideScale,
     &this->scaleAnim,
     &this->scale,
-    &gState.scale);
+    &gContext.scale);
   overrideOrCopy(
-    gState.overrideFocus,
+    gContext.overrideFocus,
     &this->focusAnim,
     &this->focus,
-    &gState.focus);
+    &gContext.focus);
   overrideOrCopy(
-    gState.overrideBrightness,
+    gContext.overrideBrightness,
     &this->brightnessAnim,
     &this->brightness,
-    &gState.brightness);
+    &gContext.brightness);
 }
 
 static void updatePropDynamic(
@@ -59,16 +58,16 @@ static void updatePropAnim(
 
 /**
  * Calculate the rotation matrix and camera pos with gui data, and save
- * caculated data to gState.
+ * caculated data to gContext.
  */
 void hscUpdatePropMain(SkyCameraProp *this) {
-  if (!gState.enable)
+  if (!gContext.enable)
     return;
 
-  if (gState.majorMode == MM_STATIC)
+  if (gContext.majorMode == HscMajorMode_Static)
     updatePropStatic(this);
-  else if (gState.majorMode == MM_DYNAMIC)
+  else if (gContext.majorMode == HscMajorMode_Dynamic)
     updatePropDynamic(this);
-  else if (gState.majorMode == MM_ANIMATION)
+  else if (gContext.majorMode == HscMajorMode_Animation)
     updatePropAnim(this);
 }

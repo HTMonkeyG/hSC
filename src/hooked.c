@@ -1,7 +1,6 @@
 #include <math.h>
 
 #include "internal.h"
-#include "ui/ui.h"
 
 // Defines.
 #define MH_SUCCESSED(v, s) ((v) |= (!(s)))
@@ -48,7 +47,7 @@ static u64 hook_SkyCameraProp__updateParams(SkyCameraProp *this, u64 context) {
   result = ((PFN_SkyCameraProp__updateParams)gTramp.fn_SkyCameraProp__updateParams)(
     this, context);
   
-  if (this->cameraType == gState.cameraMode + 1)
+  if (this->cameraType == gContext.cameraMode + 1)
     hscUpdatePropMain(this);
 
   return result;
@@ -71,7 +70,7 @@ static u64 hook_SkyCameraProp_updateUI(
   i08 a9
 ) {
   u64 result;
-  if (gState.enable && gState.noOriginalUi)
+  if (gContext.enable && gContext.noOriginalUi)
     // Disable original camera ui.
     return 0;
   result = ((PFN_SkyCameraProp_updateUI)gTramp.fn_SkyCameraProp_updateUI)(
@@ -120,7 +119,7 @@ static u64 hook_WhiskerCamera_update(
   u64 result;
   result = ((PFN_WhiskerCamera_update)gTramp.fn_WhiskerCamera_update)(
     this, context);
-  if (gState.cameraMode == CM_WHISKER) {
+  if (gContext.cameraMode == HscCameraMode_Whisker) {
     hscPreupdateCameraMain(&this->super);
     hscUpdateCameraMain(&this->super);
   }
@@ -141,8 +140,8 @@ static u64 hook_SkyCamera_update(
   result = ((PFN_SkyCamera_update)gTramp.fn_SkyCamera_update)(
     this, context);
   if (
-    gState.cameraMode < CM_WHISKER
-    && SkyCamera_getPropPtr(this)->cameraType == gState.cameraMode + 1
+    gContext.cameraMode < HscCameraMode_Whisker
+    && SkyCamera_getPropPtr(this)->cameraType == gContext.cameraMode + 1
   ) {
     hscPreupdateCameraMain(&this->super);
     hscUpdateCameraMain(&this->super);

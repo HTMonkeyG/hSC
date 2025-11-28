@@ -1,12 +1,10 @@
 #include <math.h>
 #include "imgui.h"
 
-#include "ui/ui.h"
 #include "mth/macros.h"
+#include "internal.h"
 
-static const char *MODES[] = { "FirstPerson", "Front", "Placed", "WhiskerCamera" }
-  //, *FREECAMMODES[] = { "Orientation", "Axial", "Full-direction" }
-  , *FPVMODES[] = { "Elytra", "Barrel-roll" };
+static const char *FPVMODES[] = { "Elytra", "Barrel-roll" };
 static const f32 STEP = 0.1f;
 
 void hscUIShowTips(
@@ -40,80 +38,80 @@ static void inputFloatXYZ(f32 *v, f32 cursorX) {
 }
 #undef InputSingleAxis
 
-static void hscUIMenuStatic() {
+void hscUIMenuStatic() {
   ImGui::SeparatorText("Set Camera Params");
 
   // Camera position input.
-  ImGui::Checkbox("Pos", (bool *)&gState.overridePos);
+  ImGui::Checkbox("Pos", (bool *)&gContext.overridePos);
   ImGui::SameLine();
-  inputFloatXYZ(&gState.pos.x, ImGui::GetCursorPosX());
+  inputFloatXYZ(&gContext.pos.x, ImGui::GetCursorPosX());
 
   // Camera rotation input.
-  ImGui::Checkbox("Rot", (bool *)&gState.overrideDir);
+  ImGui::Checkbox("Rot", (bool *)&gContext.overrideDir);
   ImGui::SameLine();
-  inputFloatXYZ(&gState.rotDeg.x, ImGui::GetCursorPosX());
+  inputFloatXYZ(&gContext.rotDeg.x, ImGui::GetCursorPosX());
 
   // Clamp camera facing.
-  gState.rotDeg.x = fmodf(gState.rotDeg.x, 360.0f);
-  gState.rotDeg.z = fmodf(gState.rotDeg.z, 360.0f);
-  gState.rotDeg.y = m_clamp(gState.rotDeg.y, -89.75f, 89.75f);
+  gContext.rotDeg.x = fmodf(gContext.rotDeg.x, 360.0f);
+  gContext.rotDeg.z = fmodf(gContext.rotDeg.z, 360.0f);
+  gContext.rotDeg.y = m_clamp(gContext.rotDeg.y, -89.75f, 89.75f);
 
-  ImGui::BeginDisabled(gState.cameraMode == CM_WHISKER);
+  ImGui::BeginDisabled(gContext.cameraMode == HscCameraMode_Whisker);
 
   // Camera scale input.
-  ImGui::Checkbox("##cb3", (bool *)&gState.overrideScale);
+  ImGui::Checkbox("##cb3", (bool *)&gContext.overrideScale);
   ImGui::SameLine();
-  ImGui::DragFloat("Scale", &gState.scale, .01f, 0.0f, 1.0f);
+  ImGui::DragFloat("Scale", &gContext.scale, .01f, 0.0f, 1.0f);
 
   // Camera focus(blur) input.
-  ImGui::Checkbox("##cb4", (bool *)&gState.overrideFocus);
+  ImGui::Checkbox("##cb4", (bool *)&gContext.overrideFocus);
   ImGui::SameLine();
-  ImGui::DragFloat("Focus", &gState.focus, .01f, 0.0f, 1.0f);
+  ImGui::DragFloat("Focus", &gContext.focus, .01f, 0.0f, 1.0f);
 
   // Camera brightness input.
-  ImGui::Checkbox("##cb5", (bool *)&gState.overrideBrightness);
+  ImGui::Checkbox("##cb5", (bool *)&gContext.overrideBrightness);
   ImGui::SameLine();
-  ImGui::DragFloat("Brightness", &gState.brightness, .01f, 0.0f, 1.0f);
+  ImGui::DragFloat("Brightness", &gContext.brightness, .01f, 0.0f, 1.0f);
 
   ImGui::EndDisabled();
 
   ImGui::SeparatorText("Freecam params");
 
-  if (ImGui::Button("Reset pos"))
-    gState.resetPosFlag = 1;
+  if (ImGui::Button("Reset pos") || HTHotkeyPressed(gBindedKeys.resetPos))
+    gContext.resetPosFlag = 1;
 
-  ImGui::Checkbox("Disable camera movement", (bool *)&gState.freecamLockPosition);
+  ImGui::Checkbox("Disable camera movement", (bool *)&gContext.freecamLockPosition);
   hscUIShowTips(
     "When this item is checked, the movement inputs will pass to the game.",
     1);
-  ImGui::Checkbox("Disable camera rotation", (bool *)&gState.freecamLockRotation);
+  ImGui::Checkbox("Disable camera rotation", (bool *)&gContext.freecamLockRotation);
   hscUIShowTips(
     "When this item is checked, hSC will ignore mouse inputs.",
     1);
-  ImGui::Checkbox("Check collision", (bool *)&gState.freecamCollision);
-  ImGui::DragFloat("Rotate speed", &gState.freecamRotateSpeed, .01f, 0, 10.0f);
-  ImGui::DragFloat("Movement speed", &gState.freecamSpeed, .01f, 0, 100.0f);
+  ImGui::Checkbox("Check collision", (bool *)&gContext.freecamCollision);
+  ImGui::DragFloat("Rotate speed", &gContext.freecamRotateSpeed, .01f, 0, 10.0f);
+  ImGui::DragFloat("Movement speed", &gContext.freecamSpeed, .01f, 0, 100.0f);
 }
 
-static void hscUIMenuDynamic() {
+void hscUIMenuDynamic() {
   ImGui::SeparatorText("Dynamic mode");
 
   ImGui::Combo(
     "Mode",
-    &gState.fpvMode,
+    &gContext.fpvMode,
     FPVMODES,
     IM_ARRAYSIZE(FPVMODES));
 
-  if (ImGui::Button("Reset pos"))
-    gState.resetPosFlag = 1;
+  if (ImGui::Button("Reset pos") || HTHotkeyPressed(gBindedKeys.resetPos))
+    gContext.resetPosFlag = 1;
 }
 
-static void hscUIMenuAnim() {
+void hscUIMenuAnim() {
   ImGui::SeparatorText("Animation mode");
   // TODO: Under development.
 }
 
-static void hscUIMenuSettings() {
+void hscUIMenuSettings() {
   ImGui::SeparatorText("General settings");
 
   ImGui::Text("Mouse sensitivity");
@@ -146,62 +144,4 @@ static void hscUIMenuSettings() {
   ImGui::Checkbox(
     "##settingsCheckbox4",
     (bool *)&gOptions.freecam.swapRollYaw);
-}
-
-void hscUIWindowMain() {
-  ImGuiIO &io = ImGui::GetIO();
-  (void)io;
-
-  // Title.
-  if (!ImGui::Begin("hSC Main", (bool *)&gGui.isOpen))
-    return (void)ImGui::End();
-  
-  // Overlay window FPS display.
-  ImGui::Text("Overlay %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-
-  // General options.
-  if (ImGui::Checkbox("Enable plugin", (bool *)&gState.enable))
-    ;//gState.resetPosFlag = 1;
-  ImGui::Combo("Use mode", &gState.cameraMode, MODES, IM_ARRAYSIZE(MODES));
-  ImGui::Checkbox("No UI", (bool *)&gState.noOriginalUi);
-  hscUIShowTips(
-    "Hide the original camera UI. Please adjust the parameters before select"
-    "this item.",
-    1);
-
-  if (ImGui::BeginTabBar("Mode select")) {
-    if (ImGui::BeginTabItem("Static")) {
-      gState.majorMode = MM_STATIC;
-      hscUIMenuStatic();
-      ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Dynamic")) {
-      gState.majorMode = MM_DYNAMIC;
-      hscUIMenuDynamic();
-      ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Animation")) {
-      gState.majorMode = MM_ANIMATION;
-      hscUIMenuAnim();
-      ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Settings")) {
-      hscUIMenuSettings();
-      ImGui::EndTabItem();
-    }
-    if (ImGui::BeginTabItem("Abouts")) {
-      ImGui::Text("hSC Plugin v" HSC_VERSION " by HTMonkeyG");
-      ImGui::Text("A camera plugin developed for Sky:CotL.");
-#ifdef HTML_VERSION_NAME
-      ImGui::Text("Compiled on HTModLoader SDK v" HTML_VERSION_NAME ".");
-#endif
-      ImGui::TextLinkOpenURL(
-        "<https://www.github.com/HTMonkeyG/hSC>",
-        "https://www.github.com/HTMonkeyG/hSC");
-      ImGui::EndTabItem();
-    }
-    ImGui::EndTabBar();
-  }
-
-  ImGui::End();
 }
