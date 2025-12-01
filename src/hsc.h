@@ -323,6 +323,27 @@ i08 hscCreateAllHooks();
 i08 hscRemoveAllHooks();
 
 //-----------------------------------------------------------------------------
+// [SECTION] HSC_CALL
+//-----------------------------------------------------------------------------
+
+typedef struct {
+  char unk_1[32];
+  void *pValue;
+  void *unk_2;
+  int type;
+} SkyUniform;
+
+// Typedefs of in-game functions to be called.
+typedef void *(__fastcall *PFN_GlobalShaderUniforms_Singleton)(
+  void);
+typedef SkyUniform *(__fastcall *PFN_GlobalShaderUniforms_m_FindUniform)(
+  void *, const char *);
+
+i08 hscInitAllCalls();
+void *hscGetSkyUniform(
+  const char *);
+
+//-----------------------------------------------------------------------------
 // [SECTION] HSC_CAM_UPDATE
 //-----------------------------------------------------------------------------
 
