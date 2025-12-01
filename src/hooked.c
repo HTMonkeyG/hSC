@@ -15,7 +15,7 @@ static i08 gInit = 0;
 
 // Global variables.
 FuncAddresses gTramp = {0};
-u64 gSavedLevelContext = 0;
+u64 gCollisionGeoBarn = 0;
 
 // ----------------------------------------------------------------------------
 // [SECTION] Detour functions.
@@ -88,7 +88,7 @@ static u64 hook_SkyCameraProp_updateUI(
  * 
  * Param a5 and a6 is missed when use IDA to decompile.
  */
-static u64 hook_World_interactionTest(
+static u64 hook_CollisionGeoBarn_Raycast(
   u64 a1,
   v4f *origin,
   v4f *direction,
@@ -97,12 +97,12 @@ static u64 hook_World_interactionTest(
   i08 *a6
 ) {
   u64 result;
-  if (gSavedLevelContext != a1 && gInit) {
+  if (gCollisionGeoBarn != a1 && gInit) {
     // Save pointer to current context.
-    gSavedLevelContext = a1;
-    LOGI("World::interactionTest(): context: %p\n", (void *)gSavedLevelContext);
+    gCollisionGeoBarn = a1;
+    LOGI("CollisionGeoBarn::Raycast(): context: %p\n", (void *)gCollisionGeoBarn);
   }
-  result = ((PFN_World_interactionTest)gTramp.fn_Level_interactionTest)(
+  result = ((PFN_CollisionGeoBarn_Raycast)gTramp.fn_CollisionGeoBarn_Raycast)(
     a1, origin, direction, a4, a5, a6);
   return result;
 }
@@ -173,7 +173,7 @@ static void *const detourFunc[9] = {
   NULL,
   hook_SkyCameraProp_update,
   NULL,
-  hook_World_interactionTest,
+  hook_CollisionGeoBarn_Raycast,
   hook_WhiskerCamera_update,
   hook_SkyCamera_update,
   hook_Input_getMouseDeltaPx

@@ -16,9 +16,12 @@ void hscPreupdateDynamic(
       this->context1.cameraPos,
       V4FZERO,
       HscFpvElytraFlags_Smooth);
-    hscFpvElytraEnableRoll(1);
-    //hscFpvElytraEnableSmooth(1);
     return;
+  }
+
+  if (gContext.fpvMode == 0) {
+    hscFpvElytraEnableRoll(0);
+    hscFpvElytraEnableSmooth(0);
   }
 
   mouseDelta = hscGetFacingDeltaRad();

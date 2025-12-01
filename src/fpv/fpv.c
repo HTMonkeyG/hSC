@@ -18,11 +18,11 @@ i08 hscFpvCheckCollision(
     , origin, dir, center, vec;
   f32 len;
   i32 iter;
-  InteractionResult ir;
+  RaycastResult ir;
 
   if (
-    !gSavedLevelContext
-    || !gTramp.fn_Level_interactionTest
+    !gCollisionGeoBarn
+    || !gTramp.fn_CollisionGeoBarn_Raycast
     || !velocity
     || !aabb
   )
@@ -44,8 +44,8 @@ i08 hscFpvCheckCollision(
       continue;
 
     while (
-      ((PFN_World_interactionTest)gTramp.fn_Level_interactionTest)(
-        gSavedLevelContext, &origin, &dir, len, NULL, (i08 *)&ir)
+      ((PFN_CollisionGeoBarn_Raycast)gTramp.fn_CollisionGeoBarn_Raycast)(
+        gCollisionGeoBarn, &origin, &dir, len, NULL, (i08 *)&ir)
     ) {
       if (iter >= 4) {
         // If it still collides after 4 checks, then directly set the delta to
@@ -81,3 +81,6 @@ i08 hscFpvCheckCollision(
   return result;
 }
 
+void hscFpvBarnRegister() {
+
+}

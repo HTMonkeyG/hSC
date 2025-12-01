@@ -166,6 +166,8 @@ typedef struct {
   i32 fpvMode;
   // Whether to run the simulation.
   i08 doPhysics;
+  // Simulation time scale.
+  f32 fpvTimeScale;
 } HscContext;
 
 // Key bindings.
@@ -269,7 +271,7 @@ typedef union {
     void *fn_Player_getCameraPos;
 
     // Level functions.
-    void *fn_Level_interactionTest;
+    void *fn_CollisionGeoBarn_Raycast;
 
     // WhiskerCamera functions.
     void *fn_WhiskerCamera_update;
@@ -304,7 +306,7 @@ typedef u64 (__fastcall *PFN_SkyCameraProp_update)(SkyCameraProp *, u64);
 typedef u64 (__fastcall *PFN_SkyCameraProp__updateParams)(SkyCameraProp *, u64);
 typedef u64 (__fastcall *PFN_SkyCameraProp_updateUI)(
   SkyCameraProp *, u64, u64, u64, f32 *, f32 *, f32 *, u64, i08);
-typedef u64 (__fastcall *PFN_World_interactionTest)(
+typedef u64 (__fastcall *PFN_CollisionGeoBarn_Raycast)(
   u64, v4f *, v4f *, float, v4f *, i08 *);
 typedef u64 (__fastcall *PFN_WhiskerCamera_update)(
   WhiskerCamera *, u64 *);
@@ -315,7 +317,7 @@ typedef u64 (__fastcall *PFN_MainCamera__getDelta)(
 typedef u64 (__fastcall *PFN_Input_getMouseDeltaPx)(
   u64, v4f *);
 
-extern u64 gSavedLevelContext;
+extern u64 gCollisionGeoBarn;
 extern FuncAddresses gTramp;
 
 i08 hscInitAllHooks();

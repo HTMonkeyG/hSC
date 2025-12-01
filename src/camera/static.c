@@ -19,11 +19,11 @@ static i08 freecamCheckCollision(
     , origin, dir, center, vec;
   f32 len;
   i32 iter;
-  InteractionResult ir;
+  RaycastResult ir;
 
   if (
-    !gSavedLevelContext
-    || !gTramp.fn_Level_interactionTest
+    !gCollisionGeoBarn
+    || !gTramp.fn_CollisionGeoBarn_Raycast
     || !delta
     || !aabb
   )
@@ -45,8 +45,8 @@ static i08 freecamCheckCollision(
       continue;
 
     while (
-      ((PFN_World_interactionTest)gTramp.fn_Level_interactionTest)(
-        gSavedLevelContext, &origin, &dir, len, NULL, (i08 *)&ir)
+      ((PFN_CollisionGeoBarn_Raycast)gTramp.fn_CollisionGeoBarn_Raycast)(
+        gCollisionGeoBarn, &origin, &dir, len, NULL, (i08 *)&ir)
     ) {
       if (iter >= 4) {
         // If it still collides after 4 checks, then directly set the delta to

@@ -128,14 +128,14 @@ typedef struct {
 
 #define SkyCamera_getPropPtr(sc) ((SkyCameraProp *)((i08 *)(((SkyCamera *)(sc))->prop) - 0x88))
 
-// The return value of World::interactionTest().
+// The return value of CollisionGeoBarn::Raycast().
 typedef struct {
   // Intersection point.
   v4f intersection;
   // Normal vector.
   v4f normal;
   i08 unk[0x40];
-} InteractionResult;
+} RaycastResult;
 
 #ifdef __cplusplus
 }

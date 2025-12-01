@@ -47,14 +47,14 @@ static const NamedSig sigE8_Player_getCameraPos = {
   },
   .name = "Player::getCameraPos()"
 };
-static const NamedSig sigE8_World_interactionTest = {
+static const NamedSig sigE8_CollisionGeoBarn_Raycast = {
   .s = {
     .sig =
       "C5 F8 ?  ?  E8 ?  ?  ?  ?  ?  89 ?  84 C0 74 ?  ",
     .indirect = HT_SCAN_E8,
     .offset = 0x04
   },
-  .name = "World::interactionTest()"
+  .name = "CollisionGeoBarn::Raycast()"
 };
 static const NamedSig sig_WhiskerCamera_update = {
   .s = {
@@ -105,7 +105,7 @@ const NamedSig *const RequiredFn[REQUIRED_FUNC_COUNT] = {
   NULL,
   &sigE8_SkyCameraProp_update,
   &sigE8_Player_getCameraPos,
-  &sigE8_World_interactionTest,
+  &sigE8_CollisionGeoBarn_Raycast,
   &sig_WhiskerCamera_update,
   &sig_SkyCamera_update,
   &sigE8_Input_getMouseDeltaPx
