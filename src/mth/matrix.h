@@ -142,6 +142,42 @@ static inline m44 *m44mul(
   return r;
 }
 
+/**
+ * Transpose the matrix.
+ * 
+ * @param r Pointer to the result.
+ * @param a
+ * @returns
+ */
+static inline m44 *m44transpose(
+  m44 *r,
+  m44 *a
+) {
+  __m256 r01, r23, b0, b1, c0, c1;
+
+  // r01 = [a00, a01, a02, a03, a10, a11, a12, a13]
+  // r23 = [a20, a21, a22, a23, a30, a31, a32, a33]
+  r01 = _mm256_set_m128(a->m128[1], a->m128[0]);
+  r23 = _mm256_set_m128(a->m128[3], a->m128[2]);
+
+  // b0 = [a00, a20, a01, a21, a02, a22, a03, a23]
+  // b1 = [a10, a30, a11, a31, a12, a32, a13, a33]
+  b0 = _mm256_unpacklo_ps(r01, r23);
+  b1 = _mm256_unpackhi_ps(r01, r23);
+
+  // c0 = [a00, a20, a01, a21, a10, a30, a11, a31]
+  // c1 = [a02, a22, a03, a23, a12, a32, a13, a33]
+  c0 = _mm256_permute2f128_ps(b0, b1, 0x20);
+  c1 = _mm256_permute2f128_ps(b0, b1, 0x31);
+
+  r->m128[0] = _mm256_extractf128_ps(c0, 0);
+  r->m128[1] = _mm256_extractf128_ps(c0, 1);
+  r->m128[2] = _mm256_extractf128_ps(c1, 0);
+  r->m128[3] = _mm256_extractf128_ps(c1, 1);
+
+  return r;
+}
+
 #ifdef __cplusplus
 }
 #endif
