@@ -1,7 +1,7 @@
 #include <windows.h>
 #include "imgui.h"
 
-#include "internal.h"
+#include "hsc.h"
 
 static const char *MODES[] = {
   "FirstPerson",

@@ -145,9 +145,9 @@ HscFpv *hscFpvElytraInit(
   i32 flags
 ) {
   memset(&gElytra, 0, sizeof(HscFpv));
-  if (flags & FPVRST_POS)
+  if (flags & HscFpvResetFlags_Pos)
     gElytra.pos = pos;
-  if (flags & FPVRST_ROT)
+  if (flags & HscFpvResetFlags_Rot)
     gElytra.rot = rot;
 
   eulerToRotationXYZ(gElytra.rot, gElytra.matrix.rows);
@@ -170,7 +170,7 @@ HscFpv *hscFpvElytraUpdate(
   fDelta = v4fscale(fDelta, 1 / timeElapsed);
 
   // Apply smooth effect.
-  if (gElytra.flags & FPVELYTRA_SMOOTH) {
+  if (gElytra.flags & HscFpvElytraFlags_Smooth) {
     factor = v4fseleq(v4fabs(fDelta), rotationFriction1, rotationFriction2);
     // Accelerate to fDelta (rad/s) with aacc = k * (fDelta - avel). The
     // factor, or k, is different when fDelta equals 0.
@@ -186,7 +186,7 @@ HscFpv *hscFpvElytraUpdate(
   dRot = v4fscale(gElytra.avel, timeElapsed);
 
   // Update rotation.
-  if (gElytra.flags & FPVELYTRA_ROLL) {
+  if (gElytra.flags & HscFpvElytraFlags_Roll) {
     // Enable full direction movement, like Do-a-barrel-roll.
     eulerToRotationXYZ(dRot, dRotMat.rows);
     m44mul(&gElytra.matrix, &dRotMat, &gElytra.matrix);
@@ -216,16 +216,16 @@ void hscFpvElytraEnableRoll(
   i08 enable
 ) {
   if (enable)
-    gElytra.flags |= FPVELYTRA_ROLL;
+    gElytra.flags |= HscFpvElytraFlags_Roll;
   else
-    gElytra.flags &= ~FPVELYTRA_ROLL;
+    gElytra.flags &= ~HscFpvElytraFlags_Roll;
 }
 
 void hscFpvElytraEnableSmooth(
   i08 enable
 ) {
   if (enable)
-    gElytra.flags |= FPVELYTRA_SMOOTH;
+    gElytra.flags |= HscFpvElytraFlags_Smooth;
   else
-    gElytra.flags &= ~FPVELYTRA_SMOOTH;
+    gElytra.flags &= ~HscFpvElytraFlags_Smooth;
 }

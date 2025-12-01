@@ -11,7 +11,7 @@
 #include <math.h>
 #include "includes/htmod.h"
 
-#include "internal.h"
+#include "hsc.h"
 
 HMODULE hModuleDll;
 

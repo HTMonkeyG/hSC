@@ -1,5 +1,5 @@
 #include "includes/htmod.h"
-#include "internal.h"
+#include "hsc.h"
 
 // HTML uses key name to sort key bindings, so we add a number to make the key
 // binding list a little bit more tidy.

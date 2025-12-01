@@ -1,6 +1,8 @@
 #include "fpv/fpv.h"
 #include "fpv/elytra.h"
-#include "internal.h"
+#include "hsc.h"
+
+HscFpv *gEnabledFpv = NULL;
 
 void hscPreupdateDynamic(
   MainCamera *this
@@ -13,7 +15,7 @@ void hscPreupdateDynamic(
     (void)hscFpvElytraInit(
       this->context1.cameraPos,
       V4FZERO,
-      FPVRST_POS);
+      HscFpvElytraFlags_Smooth);
     hscFpvElytraEnableRoll(1);
     //hscFpvElytraEnableSmooth(1);
     return;
@@ -24,11 +26,13 @@ void hscPreupdateDynamic(
   deltaRot.y = mouseDelta.y;
   deltaRot.z = gContext.facingInput.z * gTimeElapsed;
 
-  // Update elytra.
-  (void)hscFpvElytraUpdate(
-    gContext.movementInput,
-    deltaRot,
-    gTimeElapsed);
+  if (gContext.doPhysics) {
+    // Update elytra.
+    (void)hscFpvElytraUpdate(
+      gContext.movementInput,
+      deltaRot,
+      gTimeElapsed);
+  }
 
   gCamera.matrix = gElytra.matrix;
   gContext.pos = gCamera.pos;

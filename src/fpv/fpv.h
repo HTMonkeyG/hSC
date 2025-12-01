@@ -1,14 +1,11 @@
 #ifndef __FPV_H__
 #define __FPV_H__
 
-#include "internal.h"
+#include "hsc.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#define FPVRST_POS (0x01)
-#define FPVRST_ROT (0x02)
 
 // The type of the fpv update functions must match the definition below.
 typedef i08 (__fastcall *PFN_FpvUpdate)(
@@ -16,6 +13,13 @@ typedef i08 (__fastcall *PFN_FpvUpdate)(
 typedef i08 (__fastcall *PFN_FpvReset)(
   v4f, v4f, i32);
 
+typedef i32 HscFpvResetFlags;
+enum HscFpvResetFlags_ {
+  HscFpvResetFlags_Pos = 1 << 0,
+  HscFpvResetFlags_Rot = 1 << 2
+};
+
+// Fpv basic physic states.
 typedef struct {
   // -- User-defined flags.
   u32 flags;

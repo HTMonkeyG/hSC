@@ -1,7 +1,7 @@
 #include "imgui.h"
 
 #include "mth/macros.h"
-#include "internal.h"
+#include "hsc.h"
 
 v4f gMouseDeltaPx = {0};
 HscKeyBindings gBindedKeys;

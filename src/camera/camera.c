@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "internal.h"
+#include "hsc.h"
 
 HscSnapshot gCamera;
 HscSnapshotIntent gCameraIntent;

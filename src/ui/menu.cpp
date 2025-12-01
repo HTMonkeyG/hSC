@@ -2,7 +2,7 @@
 #include "imgui.h"
 
 #include "mth/macros.h"
-#include "internal.h"
+#include "hsc.h"
 
 static const char *FPVMODES[] = { "Elytra", "Barrel-roll" };
 static const f32 STEP = 0.1f;

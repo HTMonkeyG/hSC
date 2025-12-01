@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "hsc.h"
 
 // ----------------------------------------------------------------------------
 // [SECTION] Camera prop update functions.

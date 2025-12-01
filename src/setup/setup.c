@@ -1,6 +1,6 @@
 #include "includes/htmodloader.h"
 #include "aliases.h"
-#include "internal.h"
+#include "hsc.h"
 
 // ----------------------------------------------------------------------------
 // This file contains all signature codes of the in-game functions hooked or

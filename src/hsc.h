@@ -162,7 +162,10 @@ typedef struct {
   i08 freecamLockRotation;
 
   // -- FPV data.
+  // Fpv mode.
   i32 fpvMode;
+  // Whether to run the simulation.
+  i08 doPhysics;
 } HscContext;
 
 // Key bindings.
@@ -196,11 +199,15 @@ typedef struct {
   } control;
 } HscOptions;
 
+// The module handle of the plugin.
 extern HMODULE hModuleDll;
+// Handles of all binded keys.
 extern HscKeyBindings gBindedKeys;
 // Global context of the plugin.
 extern HscContext gContext;
+// Configurations.
 extern HscOptions gOptions;
+// Mouse delta.
 extern v4f gMouseDeltaPx;
 
 // The camera status to be updated to the current camera object of the game.

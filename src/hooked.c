@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "internal.h"
+#include "hsc.h"
 
 // Defines.
 #define MH_SUCCESSED(v, s) ((v) |= (!(s)))

@@ -1,22 +1,26 @@
 #ifndef __ELYTRA_H__
 #define __ELYTRA_H__
 
-/**
- * This file contains basic minecraft elytra physics, and this is a template
- * for developing your own FPV physics.
- */
+// ----------------------------------------------------------------------------
+// This file contains basic minecraft elytra physics, and this is a template
+// for developing your own FPV physics.
+// ----------------------------------------------------------------------------
 
-#include "internal.h"
+#include "hsc.h"
 #include "fpv/fpv.h"
-
-#define FPVELYTRA_ROLL (0x01)
-#define FPVELYTRA_SMOOTH (0x02)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/** Import the struct. */
+typedef i32 HscFpvElytraFlags;
+enum HscFpvElytraFlags_ {
+  HscFpvElytraFlags_None = 0,
+  HscFpvElytraFlags_Roll = 1 << 0,
+  HscFpvElytraFlags_Smooth = 1 << 1
+};
+
+// Elytra simulation states.
 extern HscFpv gElytra;
 
 /**

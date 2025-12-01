@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "hsc.h"
 
 static const v4f AABB_SIZE = {0.1f, 0.1f, 0.1f, 0.1f};
 
