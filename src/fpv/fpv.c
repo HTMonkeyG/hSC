@@ -22,7 +22,7 @@ i08 hscFpvCheckCollision(
 
   if (
     !gCollisionGeoBarn
-    || !gTramp.fn_CollisionGeoBarn_Raycast
+    || !gTramp.fn_CollisionGeoBarn_raycast
     || !velocity
     || !aabb
   )
@@ -44,7 +44,7 @@ i08 hscFpvCheckCollision(
       continue;
 
     while (
-      ((PFN_CollisionGeoBarn_Raycast)gTramp.fn_CollisionGeoBarn_Raycast)(
+      ((PFN_CollisionGeoBarn_raycast)gTramp.fn_CollisionGeoBarn_raycast)(
         gCollisionGeoBarn, &origin, &dir, len, NULL, (i08 *)&ir)
     ) {
       if (iter >= 4) {

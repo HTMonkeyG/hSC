@@ -29,7 +29,7 @@ void hscUIWindowMain() {
   // Title.
   if (!ImGui::Begin("hSC Main", (bool *)&gContext.isMenuShown))
     return (void)ImGui::End();
-  
+
   // Overlay window FPS display.
   ImGui::Text("Overlay %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 

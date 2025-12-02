@@ -47,7 +47,7 @@ static const NamedSig sigE8_Player_getCameraPos = {
   },
   .name = "Player::getCameraPos()"
 };
-static const NamedSig sigE8_CollisionGeoBarn_Raycast = {
+static const NamedSig sigE8_CollisionGeoBarn_raycast = {
   .s = {
     .sig =
       "C5 F8 ?  ?  E8 ?  ?  ?  ?  ?  89 ?  84 C0 74 ?  ",
@@ -105,7 +105,7 @@ const NamedSig *const RequiredFn[REQUIRED_FUNC_COUNT] = {
   NULL,
   &sigE8_SkyCameraProp_update,
   &sigE8_Player_getCameraPos,
-  &sigE8_CollisionGeoBarn_Raycast,
+  &sigE8_CollisionGeoBarn_raycast,
   &sig_WhiskerCamera_update,
   &sig_SkyCamera_update,
   &sigE8_Input_getMouseDeltaPx

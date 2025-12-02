@@ -72,6 +72,8 @@ __declspec(dllexport) HTStatus HTMLAPI HTModOnInit(
   hscInitAllHooks();
   hscCreateAllHooks();
 
+  hscFindSkyFunctions();
+
   gModLoaded = 1;
 
   return HT_SUCCESS;

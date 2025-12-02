@@ -137,6 +137,14 @@ typedef struct {
   i08 unk[0x40];
 } RaycastResult;
 
+// Shader uniform data of Sky.
+typedef struct {
+  char unk_1[32];
+  void *pValue;
+  void *unk_2;
+  int type;
+} ShaderUniform;
+
 #ifdef __cplusplus
 }
 #endif

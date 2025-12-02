@@ -271,7 +271,7 @@ typedef union {
     void *fn_Player_getCameraPos;
 
     // Level functions.
-    void *fn_CollisionGeoBarn_Raycast;
+    void *fn_CollisionGeoBarn_raycast;
 
     // WhiskerCamera functions.
     void *fn_WhiskerCamera_update;
@@ -302,12 +302,14 @@ i08 hscSetupFuncWithSig(
 //-----------------------------------------------------------------------------
 
 // Typedefs of trampoline functions.
-typedef u64 (__fastcall *PFN_SkyCameraProp_update)(SkyCameraProp *, u64);
-typedef u64 (__fastcall *PFN_SkyCameraProp__updateParams)(SkyCameraProp *, u64);
+typedef u64 (__fastcall *PFN_SkyCameraProp_update)(
+  SkyCameraProp *, u64);
+typedef u64 (__fastcall *PFN_SkyCameraProp__updateParams)(
+  SkyCameraProp *, u64);
 typedef u64 (__fastcall *PFN_SkyCameraProp_updateUI)(
   SkyCameraProp *, u64, u64, u64, f32 *, f32 *, f32 *, u64, i08);
-typedef u64 (__fastcall *PFN_CollisionGeoBarn_Raycast)(
-  u64, v4f *, v4f *, float, v4f *, i08 *);
+typedef u64 (__fastcall *PFN_CollisionGeoBarn_raycast)(
+  void *, v4f *, v4f *, float, v4f *, i08 *);
 typedef u64 (__fastcall *PFN_WhiskerCamera_update)(
   WhiskerCamera *, u64 *);
 typedef u64 (__fastcall *PFN_SkyCamera_update)(
@@ -317,12 +319,36 @@ typedef u64 (__fastcall *PFN_MainCamera__getDelta)(
 typedef u64 (__fastcall *PFN_Input_getMouseDeltaPx)(
   u64, v4f *);
 
-extern u64 gCollisionGeoBarn;
+extern void *gCollisionGeoBarn;
 extern FuncAddresses gTramp;
 
 i08 hscInitAllHooks();
 i08 hscCreateAllHooks();
 i08 hscRemoveAllHooks();
+
+//-----------------------------------------------------------------------------
+// [SECTION] SKY_GAME_FUNCTIONS
+//-----------------------------------------------------------------------------
+
+// All Sky functions is renamed to adapt HTML naming convensions, except signature
+// code identifiers.
+// `m_` prefix is renamed to `_`, the upper camel case names of the member functions
+// is renamed to lower camel case.
+
+// Encapsulation of CollisionGeoBarn::SphereCast().
+i08 CollisionGeoBarn_sphereCast(
+  v4f start,
+  v4f end,
+  float radius,
+  v4f *filter,
+  RaycastResult *result);
+
+// Encapsulation of GlobalShaderUniforms::m_FindUniform().
+void *GlobalShaderUniforms__findUniform(
+  const char *name);
+
+// Find all functions.
+i08 hscFindSkyFunctions();
 
 //-----------------------------------------------------------------------------
 // [SECTION] HSC_CAM_UPDATE

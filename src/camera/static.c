@@ -1,80 +1,47 @@
 #include "hsc.h"
 
-static const v4f AABB_SIZE = {0.1f, 0.1f, 0.1f, 0.1f};
+#define COLLIDE_RADIUS 0.12f
+#define COLLIDE_EPSILON 0.005f
+#define COLLIDE_ITER 5
 
 /**
- * Encapsulation for invocations of World::interactionCheck().
- * 
- * No need to explicitly pass in the context parameter.
- * 
- * The pointer passed into this function must be a local variable address.
+ * Freecam collision check function.
+ * Calls CollisionGeoBarn::SphereCast() to do the detection.
  */
 static i08 freecamCheckCollision(
-  AABB_t *aabb,
+  v4f origin,
   v4f *delta
 ) {
-  u08 result = 0
-    , done = 0;
-  v4f vertices[8]
-    , origin, dir, center, vec;
-  f32 len;
-  i32 iter;
+  i08 result = 0;
+  i32 iter = 0;
+  v4f vec = *delta;
   RaycastResult ir;
 
-  if (
-    !gCollisionGeoBarn
-    || !gTramp.fn_CollisionGeoBarn_Raycast
-    || !delta
-    || !aabb
-  )
-    return 0;
+  if (v4flen(vec) < COLLIDE_EPSILON)
+    vec = v4fscale(v4fnormalize(vec), COLLIDE_EPSILON);
 
-  vec = *delta;
-  center = aabb_getCenter(aabb);
-  aabb_getAllVertices(aabb, vertices);
-  dir = v4fnormalize(vec);
-  len = v4flen(vec);
-
-  for (i32 i = 0; i < 8; i++) {
-    // Iterate 8 vertices of the AABB.
-    iter = 0;
-    origin = vertices[i];
-
-    if (v4fdot(vec, v4fsub(origin, center)) < 0.0f)
-      // Skip vertices which is on the "back" of the AABB.
-      continue;
-
-    while (
-      ((PFN_CollisionGeoBarn_Raycast)gTramp.fn_CollisionGeoBarn_Raycast)(
-        gCollisionGeoBarn, &origin, &dir, len, NULL, (i08 *)&ir)
-    ) {
-      if (iter >= 4) {
-        // If it still collides after 4 checks, then directly set the delta to
-        // 0.
-        memset(&vec, 0, sizeof(vec));
-        break;
-      }
-
-      // Subtract the projection of the displacement vector onto the normal
-      // vector to obtain the tangential component of the displacement vector.
-      vec = v4fsub(vec, v4fprojection(vec, ir.normal));
-      // Use the tangential vector to iterate the calculation 3 times, to avoid
-      // corruptions at the intersection of two faces.
-      dir = v4fnormalize(vec);
-      len = v4flen(vec);
-
-      result = 1;
-      if (len < 0.0001) {
-        // Directly break the loop if the displacement is small enough.
-        done = 1;
-        break;
-      }
-
-      iter++;
+  while (CollisionGeoBarn_sphereCast(
+    origin,
+    v4fadd(origin, vec),
+    COLLIDE_RADIUS,
+    NULL,
+    &ir
+  )) {
+    if (iter >= COLLIDE_ITER || v4flen(vec) < COLLIDE_EPSILON) {
+      // Directly break the loop if the displacement is small enough, or it
+      // still collides after enough checks.
+      vec = V4FZERO;
+      break;
     }
 
-    if (done)
-      break;
+    // Subtract the projection of the displacement vector onto the normal
+    // vector to obtain the tangential component of the displacement vector.
+    // Use the tangential vector to iterate the calculation 3 times, to avoid
+    // corruptions at the intersection of two faces.
+    vec = v4fsub(vec, v4fprojection(vec, ir.normal));
+
+    iter++;
+    result = 1;
   }
 
   *delta = vec;
@@ -103,7 +70,6 @@ void hscPreupdateStatic(
   v4f deltaRot = {0}
     , mouseDelta, delta;
   m44 matDelta = {0};
-  AABB_t aabb;
 
   if (gContext.overrideDir) {
     mouseDelta = hscGetFacingDeltaRad();
@@ -174,11 +140,9 @@ void hscPreupdateStatic(
       // Multiply by speed.
       delta = v4fscale(delta, gContext.freecamSpeed * gTimeElapsed);
 
-      if (gContext.freecamCollision) {
-        // Build AABB and check collision.
-        aabb_fromCenter(&aabb, gCamera.pos, AABB_SIZE);
-        freecamCheckCollision(&aabb, &delta);
-      }
+      if (gContext.freecamCollision)
+        // Check collision.
+        freecamCheckCollision(gCamera.pos, &delta);
 
       gCamera.pos = v4fadd(gCamera.pos, delta);
     }

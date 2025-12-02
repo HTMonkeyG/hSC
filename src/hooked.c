@@ -15,7 +15,7 @@ static i08 gInit = 0;
 
 // Global variables.
 FuncAddresses gTramp = {0};
-u64 gCollisionGeoBarn = 0;
+void *gCollisionGeoBarn = 0;
 
 // ----------------------------------------------------------------------------
 // [SECTION] Detour functions.
@@ -26,7 +26,10 @@ u64 gCollisionGeoBarn = 0;
  * 
  * This is the main update function of the camera prop.
  */
-static u64 hook_SkyCameraProp_update(SkyCameraProp *this, u64 context) {
+static u64 hook_SkyCameraProp_update(
+  SkyCameraProp *this,
+  u64 context
+) {
   u64 result;
   // NOTE: We should NOT save the SkyCameraProp *this variable due to it may vary
   // whenever. Every frame the update should be presented in the detour
@@ -41,7 +44,10 @@ static u64 hook_SkyCameraProp_update(SkyCameraProp *this, u64 context) {
  * 
  * The original function calculates the camera position and facing direction.
  */
-static u64 hook_SkyCameraProp__updateParams(SkyCameraProp *this, u64 context) {
+static u64 hook_SkyCameraProp__updateParams(
+  SkyCameraProp *this,
+  u64 context
+) {
   u64 result;
 
   result = ((PFN_SkyCameraProp__updateParams)gTramp.fn_SkyCameraProp__updateParams)(
@@ -88,8 +94,8 @@ static u64 hook_SkyCameraProp_updateUI(
  * 
  * Param a5 and a6 is missed when use IDA to decompile.
  */
-static u64 hook_CollisionGeoBarn_Raycast(
-  u64 a1,
+static u64 hook_CollisionGeoBarn_raycast(
+  void *a1,
   v4f *origin,
   v4f *direction,
   float a4,
@@ -100,9 +106,9 @@ static u64 hook_CollisionGeoBarn_Raycast(
   if (gCollisionGeoBarn != a1 && gInit) {
     // Save pointer to current context.
     gCollisionGeoBarn = a1;
-    LOGI("CollisionGeoBarn::Raycast(): context: %p\n", (void *)gCollisionGeoBarn);
+    LOGI("CollisionGeoBarn: %p\n", (void *)gCollisionGeoBarn);
   }
-  result = ((PFN_CollisionGeoBarn_Raycast)gTramp.fn_CollisionGeoBarn_Raycast)(
+  result = ((PFN_CollisionGeoBarn_raycast)gTramp.fn_CollisionGeoBarn_raycast)(
     a1, origin, direction, a4, a5, a6);
   return result;
 }
@@ -155,7 +161,10 @@ static u64 hook_SkyCamera_update(
  * The original function copies the mouse delta value from the global Input
  * object to `delta`.
  */
-static u64 hook_Input_getMouseDeltaPx(u64 a1, v4f *delta) {
+static u64 hook_Input_getMouseDeltaPx(
+  u64 a1,
+  v4f *delta
+) {
   u64 result;
   result = ((PFN_Input_getMouseDeltaPx)gTramp.fn_Input_getMouseDeltaPx)(
     a1, delta);
@@ -173,7 +182,7 @@ static void *const detourFunc[9] = {
   NULL,
   hook_SkyCameraProp_update,
   NULL,
-  hook_CollisionGeoBarn_Raycast,
+  hook_CollisionGeoBarn_raycast,
   hook_WhiskerCamera_update,
   hook_SkyCamera_update,
   hook_Input_getMouseDeltaPx
