@@ -12,7 +12,7 @@
 #include "aliases.h"
 #include "sky.h"
 
-#define HSC_VERSION "0.4.1"
+#define HSC_VERSION "0.4.2"
 
 #if HTML_VERSION < 10801
 #error "HTML SDK version must >= v1.8.1"
