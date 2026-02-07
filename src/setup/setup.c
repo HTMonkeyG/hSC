@@ -7,104 +7,73 @@
 // called in the plugin.
 // ----------------------------------------------------------------------------
 
-static const NamedSig sigE8_SkyCameraProp_updateUI = {
-  .s = {
-    .sig =
-      "4C 8D 84 24 ?  ?  ?  ?  4C 8D 8C 24 ?  ?  ?  ?  "
-      "48 89 F1 48 89 FA E8 ?  ?  ?  ?  C5 FA 10 86 ?  ",
-    .indirect = HT_SCAN_E8,
-    .offset = 0x16
-  },
-  .name = "SkyCameraProp::updateUI()"
-};
 static const NamedSig sigE8_SkyCameraProp__updateParams = {
   .s = {
     .sig =
-      "C6 44 24 ?  ?  48 89 F1 48 89 FA E8 ?  ?  ?  ?  "
-      "4C 8D 44 24 ?  48 89 F1 48 89 FA E8 ?  ?  ?  ?  ",
+      "48 89 F1 48 89 FA E8 ?  ?  ?  ?  4C 8D 85 ?  ?  "
+      "?  ?  48 89 F1 48 89 FA",
     .indirect = HT_SCAN_E8,
-    .offset = 0x0B
+    .offset = 0x06
   },
   .name = "SkyCameraProp::_updateParams()",
 };
 static const NamedSig sigE8_SkyCameraProp_update = {
   .s = {
     .sig =
-      "80 ?  ?  ?  ?  ?  ?  74 ?  48 89 ?  48 89 ?  E8 "
-      "?  ?  ?  ?  E9 ?  ?  ?  ?  48 8B ?  ?  ?  ?  ?  ",
+      "80 ?  ?  ?  ?  ?  01 ?  ?  48 89 ?  48 89 ?  E8 "
+      "?  ?  ?  ?  E9 ?  ?  ?  ?  48 8B ",
     .indirect = HT_SCAN_E8,
     .offset = 0x0F
   },
   .name = "SkyCameraProp::update()",
 };
-static const NamedSig sigE8_Player_getCameraPos = {
-  .s = {
-    .sig =
-      "48 8B ?  ?  48 8D ?  ?  ?  ?  ?  ?  E8 ?  ?  ?  "
-      "?  C5 F8 28 ?  ?  ?  ?  ?  ?  C5 F8 29 ?  ?  ?  ",
-    .indirect = HT_SCAN_E8,
-    .offset = 0x0C
-  },
-  .name = "Player::getCameraPos()"
-};
 static const NamedSig sigE8_CollisionGeoBarn_raycast = {
   .s = {
     .sig =
-      "C5 F8 ?  ?  E8 ?  ?  ?  ?  ?  89 ?  84 C0 74 ?  ",
+      "C5 ?  ?  ?  E8 ?  ?  ?  ?  ?  89 ?  84 C0 74 ?  ",
     .indirect = HT_SCAN_E8,
     .offset = 0x04
   },
-  .name = "CollisionGeoBarn::Raycast()"
+  .name = "CollisionGeoBarn::raycast()"
 };
 static const NamedSig sig_WhiskerCamera_update = {
   .s = {
     .sig =
-      "49 89 ?  48 83 ?  ?  ?  ?  ?  ?  0F 84 ?  ?  ?  "
-      "?  ?  89 ?  48 8B ?  ?  ?  ?  ?  48 8D ?  ?  48 "
-      "89 ?  45 31 ?  45 31",
+      "48 89 CE 48 83 BA ?  ?  ?  ?  ?  0F 84 ?  ?  ?  "
+      "?  48 89 D7 48 8B 8A ?  ?  ?  ?  48 8D 9C 24 ",
     .indirect = HT_SCAN_DIRECT,
-    .offset = -0x6B
+    .offset = -0x6F
   },
   .name = "WhiskerCamera::update()"
 };
 static const NamedSig sig_SkyCamera_update = {
   .s = {
     .sig =
-      "55 56 57 48 83 EC ?  48 8D 6C 24 ?  ?  89 ?  C5 "
-      "FA 10 05 ?  ?  ?  ?  C5 F8 29 41 ?  C5 F8 28 05 "
-      "?  ?  ?  ?  C5 F8 29 41 ?  48 8D ?  ?  C5 F8 28 ",
+      "55 56 57 48 83 EC 40 48 8D 6C 24 ?  48 89 CE C5 "
+      "FA 10 05 ?  ?  ?  ?  C5 F8 29 41 ?  C5 FB 10 05 "
+      "?  ?  ?  ?  C5 F8 29 41 ?  48 8D",
     .indirect = HT_SCAN_DIRECT,
     .offset = 0x00
   },
   .name = "SkyCamera::update()"
 };
-static const NamedSig sigE8_MainCamera__getDelta = {
-  .s = {
-    .sig =
-      "48 8D ?  ?  ?  ?  ?  48 89 ?  4D 89 ?  4C 8B ?  "
-      "?  ?  ?  ?  E8 ?  ?  ?  ?  80 BD",
-    .indirect = HT_SCAN_E8,
-    .offset = 0x14
-  },
-  .name = "MainCamera::_getDelta()"
-};
 static const NamedSig sigE8_Input_getMouseDeltaPx = {
   .s = {
     .sig =
-      "48 8D ?  ?  4C 89 F1 48 89 F2 E8 ?  ?  ?  ?  48 "
-      "89 74 24",
+      "48 8D 55 E0 E8 ?  ?  ?  ?  48 8B 4E 68 48 8D 55 "
+      "F0 E8 ? ? ? ? ",
     .indirect = HT_SCAN_E8,
-    .offset = 0x0A
+    .offset = 0x11
   },
   .name = "Input::getMouseDeltaPx()"
 };
 
 const NamedSig *const RequiredFn[REQUIRED_FUNC_COUNT] = {
   &sigE8_SkyCameraProp__updateParams,
-  &sigE8_SkyCameraProp_updateUI,
+  NULL,
   NULL,
   &sigE8_SkyCameraProp_update,
-  &sigE8_Player_getCameraPos,
+  NULL,
   &sigE8_CollisionGeoBarn_raycast,
   &sig_WhiskerCamera_update,
   &sig_SkyCamera_update,
