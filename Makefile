@@ -39,23 +39,24 @@ vpath %.cpp $(SRC_DIRS)
 
 .PHONY: all clean
 
-all: $(DIST_DIR) $(BIN_TARGET)
+all: $(DIST_DIR)
+	-@$(MAKE) $(BIN_TARGET)
 
 $(BIN_TARGET): $(C_OBJ) $(CPP_OBJ)
 	@echo Linking ...
 	@$(CXX) $(CFLAGS) $^ -shared -o $@ $(LFLAGS)
 	@echo Done.
 
-$(DIST_DIR)/%.o: %.c $(CXX_HEADER) $(DIST_DIR)
+$(DIST_DIR)/%.o: %.c $(CXX_HEADER)
 	@echo Compiling file "$<" ...
 	@$(CC) $(CFLAGS) -c $< -o $@
 
-$(DIST_DIR)/%.o: %.cpp $(CXX_HEADER) $(DIST_DIR)
+$(DIST_DIR)/%.o: %.cpp $(CXX_HEADER)
 	@echo Compiling file "$<" ...
 	@$(CXX) $(CFLAGS) -c $< -o $@
 
 $(DIST_DIR):
-	mkdir dist
+	-@mkdir dist
 
 clean:
 	-@del .\dist\*.o
