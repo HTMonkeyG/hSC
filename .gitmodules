@@ -1,0 +1,6 @@
+[submodule "libraries/glm"]
+	path = libraries/glm
+	url = https://github.com/icaven/glm
+[submodule "libraries/rapidjson"]
+	path = libraries/rapidjson
+	url = https://github.com/Tencent/rapidjson
