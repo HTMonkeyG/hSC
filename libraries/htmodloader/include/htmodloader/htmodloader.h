@@ -1,7 +1,29 @@
 // ----------------------------------------------------------------------------
-// API exports of HT's Mod Loader.
-// Copyright (c) HTMonkeyG 2025
-// https://www.github.com/HTMonkeyG/HTML-Sky
+// API exports of HTModLoader.
+// <https://www.github.com/HTMonkeyG/HTML-Sky>
+//
+// MIT License
+//
+// Copyright (c) 2025 HTMonkeyG
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
+//
 // ----------------------------------------------------------------------------
 
 // #pragma once
@@ -16,8 +38,8 @@
 // Mod loader version.
 // Version number is used for pre-processing statements handling version
 // compatibility.
-#define HTML_VERSION 10801
-#define HTML_VERSION_NAME "1.8.1"
+#define HTML_VERSION 11100
+#define HTML_VERSION_NAME "1.11.0"
 
 #define HTMLAPI __stdcall
 #ifndef HTMLAPIATTR
@@ -33,7 +55,7 @@ extern "C" {
 #endif
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML basic APIs and type declarations.
+// [SECTION] HTML/basic
 // ----------------------------------------------------------------------------
 
 // Whether the execution was successful or not.
@@ -64,7 +86,7 @@ typedef struct {
 
 // Function prototype.
 typedef LPVOID (HTMLAPI *PFN_HTVoidFunction)(
-  void);
+  VOID);
 
 // Handle.
 typedef LPVOID HTHandle;
@@ -72,8 +94,8 @@ typedef LPVOID HTHandle;
 /* Mod exported function prototypes. */
 
 // Gui renderer.
-typedef void (HTMLAPI *PFN_HTModRenderGui)(
-  float, LPVOID);
+typedef VOID (HTMLAPI *PFN_HTModRenderGui)(
+  FLOAT, LPVOID);
 // Initialize event
 typedef HTStatus (HTMLAPI *PFN_HTModOnInit)(
   LPVOID);
@@ -84,26 +106,26 @@ typedef HTStatus (HTMLAPI *PFN_HTModOnEnable)(
 /**
  * Get the loader version which has loaded the mod.
  */
-HTMLAPIATTR void HTMLAPI HTGetLoaderVersion(
+HTMLAPIATTR VOID HTMLAPI HTGetLoaderVersion(
   UINT32 *result);
 
 /**
  * Get the loader version name which has loaded the mod.
  */
-HTMLAPIATTR void HTMLAPI HTGetLoaderVersionName(
+HTMLAPIATTR VOID HTMLAPI HTGetLoaderVersionName(
   LPSTR result,
   UINT32 max);
 
 /**
  * Get game status object.
  */
-HTMLAPIATTR void HTMLAPI HTGetGameStatus(
+HTMLAPIATTR VOID HTMLAPI HTGetGameStatus(
   HTGameStatus *status);
 
 /**
  * Get the folder where the game executable file is located.
  */
-HTMLAPIATTR void HTMLAPI HTGetGameExeFolder(
+HTMLAPIATTR VOID HTMLAPI HTGetGameExeFolder(
   LPSTR result,
   UINT64 maxLen);
 
@@ -111,7 +133,7 @@ HTMLAPIATTR void HTMLAPI HTGetGameExeFolder(
  * Get the folder where the mods is located. In most cases, the same as add
  * "\\htmods" to HTGetGameExeFolder()'s result.
  */
-HTMLAPIATTR void HTMLAPI HTGetModFolder(
+HTMLAPIATTR VOID HTMLAPI HTGetModFolder(
   LPSTR result,
   UINT64 maxLen);
 
@@ -122,12 +144,12 @@ HTMLAPIATTR void HTMLAPI HTGetModFolder(
 HTMLAPIATTR HMODULE HTMLAPI HTGetModuleHandle(
   LPCSTR module);
 
-typedef enum {
+typedef int HTModInfoFields;
+enum HTModInfoFields_ {
   HTModInfoFields_ModName = 1,
   HTModInfoFields_PackageName,
   HTModInfoFields_Folder
-} HTModInfoFields_;
-typedef UINT32 HTModInfoFields;
+};
 
 /**
  * Expand mod info from manifest.
@@ -149,13 +171,13 @@ HTMLAPIATTR UINT32 HTMLAPI HTGetModInfoFrom(
  * 
  * The name of the backends MUST NOT longer than 32 bytes, including '\0'.
  */
-HTMLAPIATTR void HTMLAPI HTGetActiveBackendName(
+HTMLAPIATTR VOID HTMLAPI HTGetActiveBackendName(
   LPSTR gl,
   LPSTR game);
 
 // Error codes. Partially the same as winerror.h
 typedef int HTError;
-typedef enum {
+enum HTError_ {
   HTError_Success = 0,
   // ERROR_ACCESS_DENIED.
   HTError_AccessDenied = 5,
@@ -175,10 +197,10 @@ typedef enum {
   HTError_NoMoreMatches = 626,
   // ERROR_NOT_FOUND.
   HTError_NotFound = 1168
-} HTError_;
+};
 
 // Set the last error code of HTML API.
-HTMLAPIATTR void HTMLAPI HTSetLastError(
+HTMLAPIATTR VOID HTMLAPI HTSetLastError(
   HTError dwError);
 
 // Get the last error code of HTML API.
@@ -191,6 +213,13 @@ typedef struct {
   PFN_HTVoidFunction pImAllocatorFreeFunc;
   LPVOID pImAllocatorUserData;
 } HTImGuiContexts;
+
+// Provides external font data.
+typedef struct {
+  HTImGuiContexts ctx;
+  LPVOID pFontRegular;
+  LPVOID pFontMonospace;
+} HTImGuiContextsEx;
 
 /**
  * Get ImGui global context for those mods which can't link ImGui from
@@ -205,12 +234,19 @@ typedef struct {
 HTMLAPIATTR HTStatus HTMLAPI HTImGuiDispatch(
   HTImGuiContexts *context);
 
-typedef enum {
+/**
+ * Convert font data pointers from LPVOID to ImFont *
+ */
+HTMLAPIATTR HTStatus HTMLAPI HTImGuiDispatchEx(
+  HTImGuiContextsEx *context);
+
+typedef int HTOptionType;
+enum HTOptionType_ {
   HTOptionType_Invalid = 0,
   HTOptionType_Bool,
   HTOptionType_Double,
   HTOptionType_String
-} HTOptionType;
+};
 
 /**
  * Get customized option value with the specified key.
@@ -241,22 +277,87 @@ HTMLAPIATTR HTStatus HTMLAPI HTOptionSetCustom(
   HTOptionType type,
   LPCVOID data);
 
+/**
+ * Normalizes the given path, resolving '..' and '.' segments.
+ * 
+ * All HTPath functions will process the buffer size as follow:
+ * - When joined length > maxLen, the function won't write into the result buffer
+ * and returns 0.
+ * - When result == NULL, it returns the minimum needed buffer size, including '\0'.
+ * - Otherwise, the function returns the number of bytes written, including '\0'.
+ */
+HTMLAPIATTR UINT32 HTMLAPI HTPathNormalize(
+  LPWSTR result,
+  LPCWSTR path,
+  UINT32 maxLen);
+
+/**
+ * Joins all given path segments together using the platform-specific separator
+ * as a delimiter, then normalizes the resulting path.
+ * 
+ * `paths` is an array of string, the array must be zero-terminated:
+ * LPCWSTR paths[] = {
+ *   L"C:\\Users",
+ *   L"HTMonkeyG",
+ *   NULL
+ * };
+ */
+HTMLAPIATTR UINT32 HTMLAPI HTPathJoin(
+  LPWSTR result,
+  const LPCWSTR *paths,
+  UINT32 maxLen);
+
+/**
+ * Resolves a sequence of paths or path segments into an absolute path.
+ */
+HTMLAPIATTR UINT32 HTMLAPI HTPathResolve(
+  LPWSTR result,
+  const LPCWSTR *paths,
+  UINT32 maxLen);
+
+/**
+ * Returns the relative path from `src` to `dest` based on the current working
+ * directory. If from and to each resolve to the same path (after calling
+ * `HTiPathResolve()` on each), a zero-length string is returned.
+ * 
+ * If a zero-length string is passed as from or to, the current working directory
+ * will be used instead of the zero-length strings.
+ */
+HTMLAPIATTR UINT32 HTMLAPI HTPathRelative(
+  LPWSTR result,
+  LPCWSTR src,
+  LPCWSTR dest,
+  UINT32 maxLen);
+
+/**
+ * Determines if the literal path is absolute. Returns 1 if it's absolute, like
+ * "C:\a\b".
+ */
+HTMLAPIATTR UINT32 HTMLAPI HTPathIsAbsolute(
+  LPCWSTR path);
+
 // ----------------------------------------------------------------------------
-// [SECTION] HTML assembly patch APIs.
+// [SECTION] HTML/assembly
 // ----------------------------------------------------------------------------
 
 // Enable or disable all hooks or patches created by the specified mod.
 #define HT_ALL_HOOKS NULL
 
 // Method for obtaining the final address.
-typedef enum {
+typedef int HTSigScanType;
+enum HTSigScanType_ {
   // The Signature represents the function body.
-  HT_SCAN_DIRECT = 0,
+  HTSigScanType_Direct = 0,
   // The signature represents the E8 or E9 instruction that calls the function.
-  HT_SCAN_E8,
+  HTSigScanType_E8,
   // The signature represents the FF15 instruction that calls the function.
-  HT_SCAN_FF15,
-} HTSigScanType;
+  HTSigScanType_FF15,
+
+  // Reserved for compatibility.
+  HT_SCAN_DIRECT = HTSigScanType_Direct,
+  HT_SCAN_E8 = HTSigScanType_E8,
+  HT_SCAN_FF15 = HTSigScanType_FF15,
+};
 
 // Signature code config.
 typedef struct {
@@ -286,6 +387,13 @@ typedef struct {
  * to set the error code.
  */
 HTMLAPIATTR LPVOID HTMLAPI HTSigScan(
+  const HTAsmSig *signature);
+
+/**
+ * Scan with signature and specified module name.
+ */
+HTMLAPIATTR LPVOID HTMLAPI HTSigScanEx(
+  const wchar_t *moduleName,
   const HTAsmSig *signature);
 
 /**
@@ -369,7 +477,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTAsmPatchDisable(
   LPVOID target);
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML memory manager APIs.
+// [SECTION] HTML/memory
 // ----------------------------------------------------------------------------
 
 /**
@@ -396,12 +504,12 @@ HTMLAPIATTR HTStatus HTMLAPI HTMemFree(
   LPVOID pointer);
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML mod communication APIs.
+// [SECTION] HTML/communication
 // ----------------------------------------------------------------------------
 
 // Event callback.
-typedef void (HTMLAPI *PFN_HTEventCallback)(
-  const LPVOID data);
+typedef VOID (HTMLAPI *PFN_HTEventCallback)(
+  LPCVOID data);
 
 #define HT_INVALID_HANDLE NULL
 
@@ -436,10 +544,14 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommRegFunction(
  * 
  * The callback function should not modify the content pointed to by the
  * `data` pointer. The callback function must assume that the data pointer
- * is only valid before the callback function returns.
+ * is valid only before the callback function returns.
+ * 
+ * The calling order of event callbacks is uncertain, do not rely on the
+ * calling order.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommOnEvent(
-  LPCSTR name,
+  HMODULE hModuleOwner,
+  LPCSTR id,
   PFN_HTEventCallback callback);
 
 #define HTCommAddEventListener HTCommOnEvent
@@ -448,29 +560,32 @@ HTMLAPIATTR HTStatus HTMLAPI HTCommOnEvent(
  * Remove a registered event listener.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommOffEvent(
-  LPCSTR name,
+  HMODULE hModuleOwner,
+  LPCSTR id,
   PFN_HTEventCallback callback);
 
 #define HTCommRemoveEventListener HTCommOffEvent
-  
+
 /**
  * Trigger an event with specified data.
  * 
- * DO NOT emit the event itself in the callback function.
+ * DO NOT emit the event itself in the callback function, no matter directly
+ * or indirectly.
  */
 HTMLAPIATTR HTStatus HTMLAPI HTCommEmitEvent(
-  LPCSTR name,
+  LPCSTR id,
   LPVOID reserved,
   LPVOID data);
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML hotkey register APIs.
+// [SECTION] HTML/hotkey
 // ----------------------------------------------------------------------------
 
 // Modified from ImGui to keep compatibility.
 // NOTE: HTKeyCodes is not completely compatible with ImGuiKey, specially
 // in mouse inputs. Use HTKeyToImGuiKey() to convert to ImGuiKey.
-typedef enum {
+typedef int HTKeyCode;
+enum HTKeyCode_ {
   HTKey_None = 0,
 
   HTKey_NamedKey_BEGIN = 512,
@@ -572,11 +687,11 @@ typedef enum {
   HTKeyMod_Alt = 1 << 14,
   // Windows/Super (non-macOS), Ctrl (macOS)
   HTKeyMod_Super = 1 << 15,
-} HTKeyCode;
+};
 
 // Key event properties.
-typedef UINT32 HTKeyEventFlags;
-typedef enum {
+typedef int HTKeyEventFlags;
+enum HTKeyEventFlags_ {
   HTKeyEventFlags_None = 0,
   HTKeyEventFlags_Down,
   HTKeyEventFlags_Up,
@@ -592,11 +707,11 @@ typedef enum {
   HTKeyEventFlags_Repeat = 1 << 16,
   HTKeyEventFlags_Blocked = 1 << 17,
   HTKeyEventFlags_Mask = 0xFFFF
-} HTKeyEventFlags_;
+};
 
 // Key binding flags.
-typedef UINT32 HTHotkeyFlags;
-typedef enum {
+typedef int HTHotkeyFlags;
+enum HTHotkeyFlags_ {
   // Default value. The KeyDown events will be blocked when any ImGui window is
   // focused, due to io.WantCaptureKeyboard and io.WantCaptureMouse flags. Set
   // this flag when you want the key bind is only avaliable "in game".
@@ -606,11 +721,11 @@ typedef enum {
   HTHotkeyFlags_NoBlock = 1 << 0,
   // Reserved.
   HTHotkeyFlags_BlockKeyUp = 1 << 1
-} HTHotkeyFlags_;
+};
 
 // Determine how to intercept the key message.
-typedef UINT32 HTKeyEventPreventFlags;
-typedef enum {
+typedef int HTKeyEventPreventFlags;
+enum HTKeyEventPreventFlags_ {
   // Pass the event as normal.
   HTKeyEventPreventFlags_None = 0,
   // Prevent the game from receiving the key message. Setting this flag in any
@@ -620,7 +735,7 @@ typedef enum {
   // message. We do not ensure the order of the callbacks, so this flag may
   // affect other mod's behaviour uncontrollable.
   HTKeyEventPreventFlags_Next = 1 << 1,
-} HTKeyEventPreventFlags_;
+};
 
 // Key event data.
 typedef struct {
@@ -632,7 +747,7 @@ typedef struct {
   HTKeyCode key;
   // [In] Is the event a key press event. This field has been deprecated, reserved
   // for compatibility.
-  unsigned char down;
+  UINT8 down;
   // [In] Key event flags, marked the type of this event.
   HTKeyEventFlags flags;
 
@@ -641,7 +756,7 @@ typedef struct {
 } HTKeyEvent;
 
 // Hotkey callback.
-typedef void (HTMLAPI *PFN_HTHotkeyCallback)(
+typedef VOID (HTMLAPI *PFN_HTHotkeyCallback)(
   HTKeyEvent *);
 
 /**
@@ -716,7 +831,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTHotkeyUnlisten(
   LPVOID reserved);
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML console text APIs.
+// [SECTION] HTML/console
 // ----------------------------------------------------------------------------
 
 /**
@@ -749,7 +864,7 @@ HTMLAPIATTR HTStatus HTMLAPI HTTellRawV(
   va_list v);
 
 // ----------------------------------------------------------------------------
-// [SECTION] HTML persistent data storage APIs.
+// [SECTION] HTML/data
 // ----------------------------------------------------------------------------
 
 /**
@@ -759,17 +874,17 @@ HTMLAPIATTR HTStatus HTMLAPI HTTellRawV(
  */
 HTMLAPIATTR HTStatus HTMLAPI HTDataStore(
   HMODULE hModule,
-  const char *key,
+  LPCSTR key,
   UINT64 keyLen,
-  const char *value,
+  LPCSTR value,
   UINT64 valueLen);
 
 /**
  * Get a stored value with given key.
  */
-HTMLAPIATTR char *HTMLAPI HTDataGet(
+HTMLAPIATTR LPSTR HTMLAPI HTDataGet(
   HMODULE hModule,
-  const char *key,
+  LPCSTR key,
   UINT64 keyLen,
   UINT64 *valueLen);
 
@@ -781,20 +896,64 @@ HTMLAPIATTR char *HTMLAPI HTDataGet(
  */
 HTMLAPIATTR HTStatus HTMLAPI HTDataStoreStringKey(
   HMODULE hModule,
-  const char *key,
-  const char *value,
+  LPCSTR key,
+  LPCSTR value,
   UINT64 valueLen);
 
-HTMLAPIATTR char *HTMLAPI HTDataGetStringKey(
+HTMLAPIATTR LPSTR HTMLAPI HTDataGetStringKey(
   HMODULE hModule,
-  const char *key,
+  LPCSTR key,
   UINT64 *valueLen);
 
 /**
  * Free the pointer returned by HTDataGet().
  */
-HTMLAPIATTR void HTMLAPI HTDataFree(
-  char *value);
+HTMLAPIATTR VOID HTMLAPI HTDataFree(
+  LPVOID value);
+
+// ----------------------------------------------------------------------------
+// [SECTION] HTML/assert
+// ----------------------------------------------------------------------------
+
+/**
+ * Create an assertion.
+ */
+#define HTAssert(expr) (void)(\
+  (!!(expr)) || (\
+    HTAssertImpl(#expr, __FILE__, __LINE__),\
+    __debugbreak(),\
+    0\
+  )\
+)
+
+/**
+ * Create an assertion with external message.
+ */
+#define HTAssertMsg(expr, msg, ...) (void)(\
+  (!!(expr)) || (\
+    HTAssertMsgImpl(#expr, __FILE__, __LINE__, msg, ## __VA_ARGS__),\
+    __debugbreak(),\
+    0\
+  )\
+)
+
+/**
+ * Create a messagebox with informations shown.
+ */
+HTMLAPIATTR VOID HTMLAPI HTAssertImpl(
+  LPCSTR expression,
+  LPCSTR file,
+  UINT32 line);
+
+/**
+ * Create a messagebox with informations shown.
+ */
+HTMLAPIATTR VOID HTMLAPI HTAssertMsgImpl(
+  LPCSTR expression,
+  LPCSTR file,
+  UINT32 line,
+  LPCSTR msg,
+  ...);
 
 #ifdef __cplusplus
 }

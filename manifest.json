@@ -5,7 +5,9 @@
   "mod_name": "hSC Plugin",
   "description": "A camera modification plugin developed for Sky:CotL.",
   "main": "hsc-main.dll",
-  "dependencies": {},
+  "dependencies": {
+    "htmodloader": ">=1.11.0"
+  },
   "keywords": [
     "camera",
     "hook",
